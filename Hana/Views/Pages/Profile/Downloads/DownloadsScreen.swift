@@ -324,8 +324,8 @@ struct DownloadsScreen: View {
             do {
                 let files = try services.downloadClient.localDownloads()
                 let bytes = files.reduce(Int64(0)) { partial, file in
-                    let size = (try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
-                    return partial + Int64(size)
+                    let size = file.byteCount ?? Int64((try? file.fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+                    return partial + size
                 }
                 storageText = "Storage Used: \(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file))"
             } catch {
