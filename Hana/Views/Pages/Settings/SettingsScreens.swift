@@ -1001,6 +1001,7 @@ private struct AppearanceSettingsScreen: View {
     @AppStorage(HanaSettingsKey.appearanceMode) private var appearanceMode = HanaAppearanceMode.system.rawValue
     @AppStorage(HanaSettingsKey.themeColor) private var themeColor = HanaThemeColor.defaultValue
     @AppStorage(HanaSettingsKey.demoModeEnabled) private var demoModeEnabled = false
+    @AppStorage(HanaSettingsKey.biometricLockEnabled) private var biometricLockEnabled = false
 
     var body: some View {
         Form {
