@@ -11,6 +11,7 @@ struct DownloadsScreen: View {
     @AppStorage(HanaSettingsKey.warnBeforeMobileDataDownload) private var warnBeforeMobileDataDownload = true
     @Query(sort: \DownloadQueueRecord.createdAt, order: .reverse) private var queue: [DownloadQueueRecord]
     @Query(sort: \DownloadGroupRecord.name, order: .forward) private var downloadGroups: [DownloadGroupRecord]
+    @Query(sort: \WatchHistoryRecord.watchDate, order: .reverse) private var watchHistory: [WatchHistoryRecord]
     @State private var localPlayback: LocalVideoPlayback?
     @State private var mobileDataDownloadID: String?
     @State private var toastMessage: HanaToastMessage?
@@ -22,6 +23,7 @@ struct DownloadsScreen: View {
     @State private var isSelectionModeActive = false
     @State private var selectedDownloadIDs = Set<String>()
     @State private var isSelectedDeleteConfirmationPresented = false
+    @State private var storageText = "Calculating…"
 
     var body: some View {
         content
@@ -59,6 +61,7 @@ struct DownloadsScreen: View {
             }
             .task {
                 await synchronizeDownloadRecords(showStatus: false)
+                refreshStorageSize()
                 await monitorDownloadSnapshots()
             }
             .alert("Metered network detected", isPresented: mobileDataAlertBinding) {
@@ -108,6 +111,7 @@ struct DownloadsScreen: View {
                 isDownloadingProvider: isDownloading(id:),
                 onStart: startDownloadAction,
                 onPause: pauseDownload,
+                onResume: resumeDownload,
                 onCancel: cancelDownload,
                 onPlay: playLocalFile,
                 onDelete: delete,
@@ -141,6 +145,17 @@ struct DownloadsScreen: View {
                     }
                     .disabled(selectedDownloadIDs.isEmpty)
                 } else {
+                    Menu {
+                        Button("Pause All Active") { pauseAllDownloads() }
+                        Button("Resume All Paused") { resumeAllDownloads() }
+                        Divider()
+                        Button("Delete Watched Downloads", role: .destructive) { deleteWatchedDownloads() }
+                        Divider()
+                        Label(storageText, systemImage: "internaldrive")
+                    } label: {
+                        Label("Download Controls", systemImage: "slider.horizontal.3")
+                    }
+
                     Button {
                         newGroupName = ""
                         isCreateGroupPresented = true
@@ -272,6 +287,55 @@ struct DownloadsScreen: View {
 
     private func pauseDownload(_ item: DownloadQueueRecord) {
         services.downloadClient.pause(id: item.id)
+        if let snapshot = services.downloadClient.persistedTask(id: item.id) {
+            HanaDownloadRecordSynchronizer.apply(snapshot, to: item)
+        }
+        try? modelContext.save()
+    }
+
+    private func pauseAllDownloads() {
+        for item in queue where services.downloadClient.isDownloading(id: item.id) {
+            pauseDownload(item)
+        }
+        toastMessage = .success("Paused active downloads")
+    }
+
+    private func resumeAllDownloads() {
+        for item in queue where services.downloadClient.persistedTask(id: item.id)?.status == .paused {
+            resumeDownload(item)
+        }
+        toastMessage = .success("Resumed paused downloads")
+    }
+
+    private func deleteWatchedDownloads() {
+        let watchedCodes = Set(watchHistory.filter(\.isWatched).map(\.videoCode))
+        let items = queue.filter { watchedCodes.contains($0.videoCode) }
+        guard !items.isEmpty else {
+            toastMessage = .success("No watched downloads found")
+            return
+        }
+        delete(items: items)
+        toastMessage = .success("Deleted \(items.count) watched downloads")
+        refreshStorageSize()
+    }
+
+    private func refreshStorageSize() {
+        Task { @MainActor in
+            do {
+                let files = try services.downloadClient.localDownloads()
+                let bytes = files.reduce(Int64(0)) { partial, file in
+                    let size = (try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+                    return partial + Int64(size)
+                }
+                storageText = "Storage Used: \(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file))"
+            } catch {
+                storageText = "Storage Size Unavailable"
+            }
+        }
+    }
+
+    private func resumeDownload(_ item: DownloadQueueRecord) {
+        services.downloadClient.resume(id: item.id)
         if let snapshot = services.downloadClient.persistedTask(id: item.id) {
             HanaDownloadRecordSynchronizer.apply(snapshot, to: item)
         }
@@ -454,6 +518,7 @@ private struct DownloadQueueList: View {
     let isDownloadingProvider: (String) -> Bool
     let onStart: (DownloadQueueRecord) -> Void
     let onPause: (DownloadQueueRecord) -> Void
+    let onResume: (DownloadQueueRecord) -> Void
     let onCancel: (DownloadQueueRecord) -> Void
     let onPlay: (DownloadQueueRecord, URL) -> Void
     let onDelete: (IndexSet) -> Void
@@ -499,6 +564,9 @@ private struct DownloadQueueList: View {
                                         },
                                         onPause: {
                                             onPause(item)
+                                        },
+                                        onResume: {
+                                            onResume(item)
                                         },
                                         onCancel: {
                                             onCancel(item)
@@ -673,6 +741,7 @@ private struct DownloadQueueRow: View {
     let isDownloading: Bool
     let onStart: () -> Void
     let onPause: () -> Void
+    let onResume: () -> Void
     let onCancel: () -> Void
     let onPlay: (URL) -> Void
     let onMoveGroup: () -> Void
@@ -748,6 +817,11 @@ private struct DownloadQueueRow: View {
                         }
                     }
 
+                    if item.status == "Paused" {
+                        Button(action: onResume) {
+                            Label("Resume Download", systemImage: "play.circle")
+                        }
+                    }
                     if isDownloading {
                         Button(action: onPause) {
                             Label("Pause Download", systemImage: "pause.circle")

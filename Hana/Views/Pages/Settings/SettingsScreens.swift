@@ -788,6 +788,7 @@ private struct PlaybackSettingsScreen: View {
     @AppStorage(HanaSettingsKey.pictureInPictureEnabled) private var pictureInPictureEnabled = true
     @AppStorage(HanaSettingsKey.loopPlaybackEnabled) private var loopPlaybackEnabled = false
     @AppStorage(HanaSettingsKey.playerLongPressRate) private var playerLongPressRate = HanaPlaybackSpeedCatalog.defaultLongPressRate
+    @AppStorage(HanaSettingsKey.playbackSpeed) private var playbackSpeed = 1.0
     @AppStorage(HanaSettingsKey.autoPiP) private var autoPiP = true
     @AppStorage(HanaSettingsKey.sleepTimerMinutes) private var sleepTimerMinutes = 0
     @AppStorage(HanaSettingsKey.stopAtEpisodeEnd) private var stopAtEpisodeEnd = false
@@ -815,6 +816,13 @@ private struct PlaybackSettingsScreen: View {
                 }
                 Toggle(isOn: $loopPlaybackEnabled) {
                     Label("Loop Playback", systemImage: "repeat")
+                }
+                Picker(selection: $playbackSpeed) {
+                    ForEach(HanaPlaybackSpeedCatalog.playbackRates, id: \.self) { rate in
+                        Text(HanaPlaybackSpeedCatalog.title(for: rate)).tag(rate)
+                    }
+                } label: {
+                    Label("Default Playback Speed", systemImage: "gauge")
                 }
             }
 

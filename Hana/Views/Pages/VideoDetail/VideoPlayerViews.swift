@@ -9,7 +9,10 @@ struct VideoPlayerPanel: View {
     @AppStorage(HanaSettingsKey.allowResumePlayback) private var allowResumePlayback = true
     @AppStorage(HanaSettingsKey.pictureInPictureEnabled) private var pictureInPictureEnabled = true
     @AppStorage(HanaSettingsKey.loopPlaybackEnabled) private var loopPlaybackEnabled = false
+    @AppStorage(HanaSettingsKey.privateMode) private var privateMode = false
     @AppStorage(HanaSettingsKey.playerLongPressRate) private var playerLongPressRate = HanaPlaybackSpeedCatalog.defaultLongPressRate
+    @AppStorage(HanaSettingsKey.playbackSpeed) private var playbackSpeed = 1.0
+    @AppStorage(HanaSettingsKey.sleepTimerMinutes) private var sleepTimerMinutes = 0
     let video: HanimeVideo
     @Binding var selectedLinkID: String
     @Binding var activePlayer: AVPlayer?
@@ -28,6 +31,7 @@ struct VideoPlayerPanel: View {
     @State private var fullscreenLifecycleTask: Task<Void, Never>?
     @State private var isPlaybackActive = false
     @State private var playbackLoopController = HanaPlaybackLoopController()
+    @State private var sleepTimerTask: Task<Void, Never>?
 
     private var selectedLink: ResolutionLink? {
         video.resolutions.first { $0.id == selectedLinkID } ?? video.resolutions.first
@@ -90,9 +94,37 @@ struct VideoPlayerPanel: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
+
+                HStack(spacing: 8) {
+                    Menu {
+                        ForEach(HanaPlaybackSpeedCatalog.playbackRates, id: \.self) { rate in
+                            Button {
+                                playbackSpeed = rate
+                                player?.rate = Float(rate)
+                            } label: {
+                                Label(HanaPlaybackSpeedCatalog.title(for: rate), systemImage: playbackSpeed == rate ? "checkmark" : "gauge")
+                            }
+                        }
+                    } label: {
+                        Label(HanaPlaybackSpeedCatalog.title(for: playbackSpeed), systemImage: "gauge")
+                    }
+                    .buttonStyle(.bordered)
+
+                    Menu {
+                        Button("Off") { sleepTimerMinutes = 0 }
+                        ForEach([15, 30, 60], id: \ .self) { minutes in
+                            Button("\(minutes) Minutes") { sleepTimerMinutes = minutes }
+                        }
+                    } label: {
+                        Label(sleepTimerMinutes == 0 ? "Sleep Timer" : "\(sleepTimerMinutes)m", systemImage: "bed.double")
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
         }
         .onAppear {
+            applyPlaybackSpeed()
+            startSleepTimer()
             updatePlaybackActivation(isActive)
         }
         .onChange(of: isActive) {
@@ -108,8 +140,33 @@ struct VideoPlayerPanel: View {
             guard isActive else { return }
             configurePlaybackLoop(player: player, item: player?.currentItem)
         }
+        .onChange(of: playbackSpeed) {
+            applyPlaybackSpeed()
+        }
+        .onChange(of: sleepTimerMinutes) {
+            startSleepTimer()
+        }
         .onDisappear {
+            sleepTimerTask?.cancel()
             scheduleTeardown()
+        }
+    }
+
+    private func applyPlaybackSpeed() {
+        guard let player else { return }
+        if player.timeControlStatus == .playing {
+            player.rate = Float(playbackSpeed)
+        }
+    }
+
+    private func startSleepTimer() {
+        sleepTimerTask?.cancel()
+        guard sleepTimerMinutes > 0 else { return }
+        let seconds = Double(sleepTimerMinutes * 60)
+        sleepTimerTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(seconds))
+            guard !Task.isCancelled else { return }
+            player?.pause()
         }
     }
 
@@ -162,6 +219,7 @@ struct VideoPlayerPanel: View {
         observePlayerReadiness(playback.entry.item, linkID: selectedLink.id)
         restoredProgress = playback.isReused ? 0 : resumeTime
         player = playback.entry.player
+        playback.entry.player.rate = Float(playbackSpeed)
         activePlayer = playback.entry.player
         configurePlaybackLoop(player: playback.entry.player, item: playback.entry.item)
         updatePlaybackSnapshot()
@@ -284,6 +342,7 @@ struct VideoPlayerPanel: View {
     }
 
     private func savePlaybackProgress() {
+        guard !privateMode else { return }
         guard let player,
               let duration = player.currentItem?.duration.seconds,
               duration.isFinite,
@@ -323,6 +382,7 @@ struct VideoPlayerPanel: View {
     }
 
     private func savedProgress() -> TimeInterval {
+        guard !privateMode else { return 0 }
         guard allowResumePlayback else { return 0 }
         return watchHistoryRecord()?.progress ?? 0
     }

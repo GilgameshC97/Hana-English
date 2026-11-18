@@ -1189,6 +1189,27 @@ final class HanimeDownloadClient {
         }
     }
 
+    func resume(id: String) {
+        guard let snapshot = persistedTask(id: id), snapshot.status == .paused else { return }
+        do {
+            _ = try stateStore.markQueued(
+                request: snapshot.request,
+                sessionIdentifier: snapshot.sessionIdentifier,
+                clearResumeData: false,
+                preserveQueuePosition: true,
+                atFront: true
+            )
+            schedulePendingDownloads()
+        } catch {
+            _ = try? stateStore.markFailed(
+                requestID: id,
+                failureKind: .permanent,
+                errorDescription: error.localizedDescription,
+                resumeData: snapshot.resumeData
+            )
+        }
+    }
+
     func cancel(id: String) {
         if let task = activeTasks[id] {
             removePendingRequest(id: id)

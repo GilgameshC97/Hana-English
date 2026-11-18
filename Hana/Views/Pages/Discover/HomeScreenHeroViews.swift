@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 #if canImport(UIKit)
@@ -456,6 +457,8 @@ private enum HomeHeroForegroundStyle {
 }
 
 private struct HomeContentSurface: View {
+    @Query(sort: \WatchHistoryRecord.watchDate, order: .reverse) private var watchHistory: [WatchHistoryRecord]
+
     let sections: [HanimeHomeSection]
     let progress: CGFloat
     let width: CGFloat
@@ -469,6 +472,8 @@ private struct HomeContentSurface: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            ContinueWatchingView(records: Array(continueWatching.prefix(8)))
+
             HomeSectionsView(
                 sections: sections,
                 sectionSpacing: contentLayout.sectionSpacing,
@@ -481,6 +486,50 @@ private struct HomeContentSurface: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background {
             HomeContentSurfaceBackground(cornerRadius: cornerRadius)
+        }
+    }
+
+    private var continueWatching: [WatchHistoryRecord] {
+        watchHistory.filter { $0.isHistoryEligible && !$0.isWatched }
+    }
+}
+
+private struct ContinueWatchingView: View {
+    let records: [WatchHistoryRecord]
+
+    var body: some View {
+        if !records.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Continue Watching")
+                    .font(.headline)
+                    .padding(.horizontal)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 12) {
+                        ForEach(records) { record in
+                            NavigationLink(value: HanaRoute.video(record.videoCode)) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    ZStack(alignment: .bottomLeading) {
+                                        CoverView(url: record.coverURLString.flatMap { URL(string: $0) })
+                                            .frame(width: 180, height: 101)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        ProgressView(value: record.playbackRatio)
+                                            .tint(.pink)
+                                            .padding(.horizontal, 8)
+                                            .padding(.bottom, 6)
+                                    }
+                                    Text(record.title)
+                                        .font(.caption)
+                                        .lineLimit(1)
+                                        .frame(width: 180, alignment: .leading)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
         }
     }
 }
@@ -547,17 +596,20 @@ private struct HomeSectionView: View {
 }
 
 private struct HomeSectionVideosView: View {
+    @AppStorage(HanaSettingsKey.hideWatchedItems) private var hideWatchedItems = false
+    @Query private var watchHistory: [WatchHistoryRecord]
+
     let videos: [HanimeInfo]
     let railSpacing: CGFloat
 
     var body: some View {
 #if os(macOS)
-        HanaVideoGridLinks(videos: videos)
+        HanaVideoGridLinks(videos: visibleVideos)
             .padding(.horizontal)
 #else
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: railSpacing) {
-                ForEach(videos) { video in
+                ForEach(visibleVideos) { video in
                     NavigationLink(value: HanaRoute.video(video.videoCode)) {
                         HanaVideoGridCard(info: video)
                             .frame(width: HanaVideoGridCard.preferredWidth(for: video))
@@ -568,6 +620,12 @@ private struct HomeSectionVideosView: View {
             .padding(.horizontal)
         }
 #endif
+    }
+
+    private var visibleVideos: [HanimeInfo] {
+        guard hideWatchedItems else { return videos }
+        let watchedCodes = Set(watchHistory.filter(\.isWatched).map(\.videoCode))
+        return videos.filter { !watchedCodes.contains($0.videoCode) }
     }
 }
 

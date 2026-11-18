@@ -3,6 +3,21 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
+private enum AccountVideoListFilter: String, CaseIterable, Identifiable {
+    case all
+    case unwatched
+    case downloaded
+
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .all: "All"
+        case .unwatched: "Unwatched"
+        case .downloaded: "Downloaded Only"
+        }
+    }
+}
+
 enum AccountVideoListSort: String, CaseIterable, Identifiable {
     case siteOrder
     case title
@@ -35,6 +50,10 @@ enum AccountVideoListSort: String, CaseIterable, Identifiable {
 
 struct AccountVideoListScreen: View {
     @Environment(HanaServices.self) private var services
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @AppStorage(HanaSettingsKey.hideWatchedItems) private var hideWatchedItems = false
+    @Query private var watchHistory: [WatchHistoryRecord]
+    @Query private var downloads: [DownloadQueueRecord]
     let kind: HanimeMyListKind
     let title: String
     let emptyTitle: String
@@ -49,6 +68,7 @@ struct AccountVideoListScreen: View {
     @State private var alertMessage: HanaAlertMessage?
     @State private var filterText = ""
     @State private var sort = AccountVideoListSort.siteOrder
+    @State private var smartFilter = AccountVideoListFilter.all
     @State private var isSelectionModeActive = false
     @State private var selectedVideoCodes = Set<String>()
     @State private var isDeleteConfirmationPresented = false
@@ -70,6 +90,7 @@ struct AccountVideoListScreen: View {
                 )
             }
         }
+        .frame(maxWidth: horizontalSizeClass == .regular ? 1200 : .infinity, alignment: .top)
         .navigationTitle(title)
         .searchable(text: $filterText, prompt: "Filter \(title)")
         .toolbar {
@@ -91,6 +112,24 @@ struct AccountVideoListScreen: View {
                         }
                         .disabled(selectedVideoCodes.isEmpty || isDeleting)
                     } else {
+                        Menu {
+                            ForEach(AccountVideoListFilter.allCases) { value in
+                                Button {
+                                    smartFilter = value
+                                } label: {
+                                    if smartFilter == value { Label(value.title, systemImage: "checkmark") } else { Text(value.title) }
+                                }
+                            }
+                            Divider()
+                            Button {
+                                hideWatchedItems.toggle()
+                            } label: {
+                                if hideWatchedItems { Label("Hide Watched", systemImage: "checkmark") } else { Text("Hide Watched") }
+                            }
+                        } label: {
+                            Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
+                        }
+
                         Menu {
                             ForEach(AccountVideoListSort.allCases) { value in
                                 Button {
@@ -292,7 +331,17 @@ struct AccountVideoListScreen: View {
                     || (video.artist?.localizedCaseInsensitiveContains(filtered) == true)
             }
         }
-        return sort.sorted(videos)
+        var visible = hideWatchedItems || smartFilter == .unwatched
+            ? videos.filter { video in
+                !watchHistory.contains { $0.videoCode == video.videoCode && $0.isWatched }
+            }
+            : videos
+        if smartFilter == .downloaded {
+            visible = visible.filter { video in
+                downloads.contains { $0.videoCode == video.videoCode && $0.status == "Completed" }
+            }
+        }
+        return sort.sorted(visible)
     }
 
     private var isEditing: Bool {

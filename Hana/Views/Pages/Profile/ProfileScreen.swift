@@ -14,6 +14,7 @@ struct ProfileScreen: View {
     @Query(sort: \WatchHistoryRecord.watchDate, order: .reverse) private var watchHistory: [WatchHistoryRecord]
     @Query(sort: \DownloadQueueRecord.createdAt, order: .reverse) private var downloadQueue: [DownloadQueueRecord]
     @Query(sort: \HKeyframeRecord.updatedAt, order: .reverse) private var hKeyframeRecords: [HKeyframeRecord]
+    @AppStorage(HanaSettingsKey.privateMode) private var privateMode = false
     @State private var accountSummaryState: ProfileAccountSummaryState = .idle
 
     var body: some View {
@@ -155,6 +156,7 @@ struct ProfileScreen: View {
                 siteText: services.siteSession.baseURL.absoluteString,
                 avatarURL: avatarURL
             )
+            .blur(radius: privateMode ? 8 : 0)
         }
     }
 

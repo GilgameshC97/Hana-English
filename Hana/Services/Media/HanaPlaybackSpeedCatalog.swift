@@ -2,6 +2,8 @@ import AVKit
 import Foundation
 
 enum HanaPlaybackSpeedCatalog {
+    static let playbackRates: [Double] = [0.75, 1.0, 1.25, 1.5, 2.0]
+
     static var longPressRates: [Double] {
         systemRates
             .filter { $0 > 1 }
