@@ -1119,10 +1119,11 @@ private struct NetworkSettingsScreen: View {
     @State private var isApplyingNetworkSettings = false
     @State private var isCredentialLoginPresented = false
     @State private var isNetworkSelectionReady = false
-    @State private var isPageReady = false
     @State private var latencyError: String?
     @State private var latencyTask: Task<Void, Never>?
     @State private var invalidationTask: Task<Void, Never>?
+    @State private var cookieCount = 0
+    @State private var cloudflareStatus = "Checking..."
 
     var body: some View {
         Form {
@@ -1133,7 +1134,7 @@ private struct NetworkSettingsScreen: View {
                     Label("Address", systemImage: "link")
                 }
                 LabeledContent {
-                    Text("\(services.siteSession.lastSyncedCookieCount)")
+                    Text("\(cookieCount)")
                 } label: {
                     Label("Cookie", systemImage: "doc.badge.gearshape")
                 }
@@ -1145,7 +1146,7 @@ private struct NetworkSettingsScreen: View {
                     }
                 }
                 LabeledContent {
-                    Text(services.siteSession.cloudflareStatusText)
+                    Text(cloudflareStatus)
                 } label: {
                     Label("Cloudflare", systemImage: "shield.lefthalf.filled")
                 }
@@ -1297,26 +1298,12 @@ private struct NetworkSettingsScreen: View {
         .sheet(isPresented: $isCredentialLoginPresented) {
             SiteCredentialLoginSheet()
         }
-        .overlay {
-            if !isPageReady {
-                VStack(spacing: 10) {
-                    ProgressView()
-                    Text("Opening Network & Site")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(.background.opacity(0.92))
-            }
-        }
         .onAppear {
             isNetworkSelectionReady = false
             selectedBaseURL = services.httpClient.baseURL.absoluteString
             isNetworkSelectionReady = true
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(50))
-                isPageReady = true
-            }
+            cookieCount = services.siteSession.lastSyncedCookieCount
+            cloudflareStatus = "No live network check"
         }
         .onDisappear {
             latencyTask?.cancel()
@@ -1352,12 +1339,8 @@ private struct NetworkSettingsScreen: View {
         selectedBaseURL = normalized
 
         invalidationTask?.cancel()
-        invalidationTask = Task { @MainActor [services] in
-            await services.siteSession.invalidateCloudflareVerification()
-        }
-        Task { @MainActor [invalidationTask] in
-            try? await Task.sleep(for: .seconds(10))
-            invalidationTask?.cancel()
+        invalidationTask = Task.detached(priority: .utility) { [weak services] in
+            await services?.siteSession.invalidateCloudflareVerification()
         }
 
         reloadServices(url)
@@ -1423,9 +1406,20 @@ private struct NetworkSettingsScreen: View {
 
         let startedAt = Date()
         do {
-            let (_, response) = try await session.data(for: request)
+            let responsePair: (Data, URLResponse) = try await withThrowingTaskGroup(of: (Data, URLResponse).self) { group in
+                group.addTask { try await session.data(for: request) }
+                group.addTask {
+                    try await Task.sleep(for: .seconds(10))
+                    throw URLError(.timedOut)
+                }
+                guard let result = try await group.next() else {
+                    throw URLError(.timedOut)
+                }
+                group.cancelAll()
+                return result
+            }
             let milliseconds = Int(Date().timeIntervalSince(startedAt) * 1000)
-            let statusCode = (response as? HTTPURLResponse)?.statusCode
+            let statusCode = (responsePair.1 as? HTTPURLResponse)?.statusCode
             return SiteLatencyResult(
                 url: url,
                 milliseconds: milliseconds,
@@ -1434,10 +1428,11 @@ private struct NetworkSettingsScreen: View {
             )
         } catch {
             let milliseconds = Int(Date().timeIntervalSince(startedAt) * 1000)
+            let status = (error as? URLError)?.code == .timedOut ? "Timed out after 10 seconds" : error.localizedDescription
             return SiteLatencyResult(
                 url: url,
                 milliseconds: milliseconds,
-                status: error.localizedDescription,
+                status: status,
                 isReachable: false
             )
         }
