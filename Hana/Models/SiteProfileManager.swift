@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import Security
+import SwiftUI
 
 enum HanaLoginType: String, Codable, Identifiable, CaseIterable {
     case cookieSync = "Cookie Sync"
