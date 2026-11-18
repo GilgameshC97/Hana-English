@@ -147,13 +147,18 @@ struct HanaVideoGridCard: View {
 }
 
 struct HanaVideoGridLinks: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     let videos: [HanimeInfo]
     var normalMinimumWidth: CGFloat = 150
     var portraitMinimumWidth: CGFloat = 108
     var onVideoAppear: (HanimeInfo) -> Void = { _ in }
 
     private var minimumCardWidth: CGFloat {
-        videos.first?.style == .compact ? portraitMinimumWidth : normalMinimumWidth
+        let isRegular = horizontalSizeClass == .regular
+        if videos.first?.style == .compact {
+            return isRegular ? max(portraitMinimumWidth, 132) : portraitMinimumWidth
+        }
+        return isRegular ? max(normalMinimumWidth, 220) : normalMinimumWidth
     }
 
     private var columns: [GridItem] {

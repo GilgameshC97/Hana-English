@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 
 struct SubscriptionsScreen: View {
     @Environment(HanaServices.self) private var services
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var state: LoadableState<HanimeSubscriptionsPage> = .idle
     @State private var currentPage = 1
     @State private var isLoadingMore = false
@@ -179,12 +180,20 @@ struct SubscriptionsScreen: View {
                                     .listRowSeparator(.hidden)
                             }
 
-                            ForEach(normalVideos) { video in
-                                NavigationLink(value: HanaRoute.video(video.videoCode)) {
-                                    HanaVideoListRow(info: video)
-                                }
-                                .onAppear {
+                            if horizontalSizeClass == .regular, !normalVideos.isEmpty {
+                                HanaVideoGridLinks(videos: normalVideos) { video in
                                     preloadNextSubscriptionsPageIfNeeded(after: video, in: videos, maxPage: page.maxPage)
+                                }
+                                .padding(.vertical, 4)
+                                .listRowSeparator(.hidden)
+                            } else {
+                                ForEach(normalVideos) { video in
+                                    NavigationLink(value: HanaRoute.video(video.videoCode)) {
+                                        HanaVideoListRow(info: video)
+                                    }
+                                    .onAppear {
+                                        preloadNextSubscriptionsPageIfNeeded(after: video, in: videos, maxPage: page.maxPage)
+                                    }
                                 }
                             }
                         }

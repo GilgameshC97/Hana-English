@@ -233,11 +233,19 @@ struct AccountVideoListScreen: View {
                                     .listRowSeparator(.hidden)
                             }
 
-                            ForEach(normalVideos) { video in
-                                accountVideoRow(video)
-                                    .onAppear {
-                                        preloadNextPageIfNeeded(after: video, in: videos, maxPage: page.maxPage)
-                                    }
+                            if horizontalSizeClass == .regular, !normalVideos.isEmpty {
+                                HanaVideoGridLinks(videos: normalVideos) { video in
+                                    preloadNextPageIfNeeded(after: video, in: videos, maxPage: page.maxPage)
+                                }
+                                .padding(.vertical, 4)
+                                .listRowSeparator(.hidden)
+                            } else {
+                                ForEach(normalVideos) { video in
+                                    accountVideoRow(video)
+                                        .onAppear {
+                                            preloadNextPageIfNeeded(after: video, in: videos, maxPage: page.maxPage)
+                                        }
+                                }
                             }
                             .onDelete { offsets in
                                 let videosToDelete = offsets.compactMap { index in

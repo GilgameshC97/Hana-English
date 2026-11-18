@@ -18,6 +18,9 @@ struct ContentView: View {
     @Environment(HanaServices.self) private var services
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+#if !os(macOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+#endif
     @AppStorage(HanaSettingsKey.biometricLockEnabled) private var isBiometricLockEnabled = false
     @ObservedObject private var biometricAuth = BiometricAuthService.shared
     @AppStorage(HanaSettingsKey.appearanceMode) private var appearanceMode = HanaAppearanceMode.system.rawValue
@@ -28,6 +31,9 @@ struct ContentView: View {
     @State private var selectedTab: AppTab = .discover
 #if os(macOS)
     @State private var macOSNavigationPath: [HanaRoute] = []
+#else
+    @State private var iOSNavigationPath: [HanaRoute] = []
+    @State private var playbackLinkIDs: [String: String] = [:]
 #endif
 
     private var appThemeColor: Color {
@@ -160,45 +166,81 @@ struct ContentView: View {
             macOSNavigationPath.removeAll()
         }
 #else
-        TabView(selection: $selectedTab) {
-            Tab("Discover", systemImage: "sparkles", value: AppTab.discover) {
-                NavigationStack {
-                    HomeScreen()
+        if horizontalSizeClass == .regular {
+            NavigationSplitView {
+                List(selection: $selectedTab) {
+                    NavigationLink(value: AppTab.discover) {
+                        Label("Discover", systemImage: "sparkles")
+                    }
+                    NavigationLink(value: AppTab.subscriptions) {
+                        Label("Subscriptions", systemImage: "play.rectangle.on.rectangle")
+                    }
+                    NavigationLink(value: AppTab.favorites) {
+                        Label("Favorites", systemImage: "heart")
+                    }
+                    NavigationLink(value: AppTab.profile) {
+                        Label("Profile", systemImage: "person.crop.circle")
+                    }
+                    NavigationLink(value: AppTab.search) {
+                        Label("Search", systemImage: "magnifyingglass")
+                    }
+                }
+                .listStyle(.sidebar)
+                .navigationTitle("Hana")
+                .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 320)
+            } detail: {
+                NavigationStack(path: $iOSNavigationPath) {
+                    tabContent(for: selectedTab)
                         .navigationDestination(for: HanaRoute.self, destination: destination)
                 }
             }
+            .onChange(of: selectedTab) {
+                iOSNavigationPath.removeAll()
+            }
+        } else {
+            TabView(selection: $selectedTab) {
+                Tab("Discover", systemImage: "sparkles", value: AppTab.discover) {
+                    NavigationStack(path: $iOSNavigationPath) {
+                        HomeScreen()
+                            .navigationDestination(for: HanaRoute.self, destination: destination)
+                    }
+                }
 
-            Tab("Subscriptions", systemImage: "play.rectangle.on.rectangle", value: AppTab.subscriptions) {
-                NavigationStack {
-                    SubscriptionsScreen()
-                        .navigationDestination(for: HanaRoute.self, destination: destination)
+                Tab("Subscriptions", systemImage: "play.rectangle.on.rectangle", value: AppTab.subscriptions) {
+                    NavigationStack(path: $iOSNavigationPath) {
+                        SubscriptionsScreen()
+                            .navigationDestination(for: HanaRoute.self, destination: destination)
+                    }
+                }
+
+                Tab("Favorites", systemImage: "heart", value: AppTab.favorites) {
+                    NavigationStack(path: $iOSNavigationPath) {
+                        FavoritesScreen()
+                            .navigationDestination(for: HanaRoute.self, destination: destination)
+                    }
+                }
+
+                Tab(value: AppTab.profile) {
+                    NavigationStack(path: $iOSNavigationPath) {
+                        ProfileScreen()
+                            .navigationDestination(for: HanaRoute.self, destination: destination)
+                    }
+                } label: {
+                    ProfileTabLabel()
+                }
+
+                Tab("Search", systemImage: "magnifyingglass", value: AppTab.search, role: .search) {
+                    NavigationStack(path: $iOSNavigationPath) {
+                        SearchScreen()
+                            .navigationDestination(for: HanaRoute.self, destination: destination)
+                    }
                 }
             }
-
-            Tab("Favorites", systemImage: "heart", value: AppTab.favorites) {
-                NavigationStack {
-                    FavoritesScreen()
-                        .navigationDestination(for: HanaRoute.self, destination: destination)
-                }
-            }
-
-            Tab(value: AppTab.profile) {
-                NavigationStack {
-                    ProfileScreen()
-                        .navigationDestination(for: HanaRoute.self, destination: destination)
-                }
-            } label: {
-                ProfileTabLabel()
-            }
-
-            Tab("Search", systemImage: "magnifyingglass", value: AppTab.search, role: .search) {
-                NavigationStack {
-                    SearchScreen()
-                        .navigationDestination(for: HanaRoute.self, destination: destination)
-                }
+            .hanaTabSearchActivation()
+            .onChange(of: selectedTab) {
+                iOSNavigationPath.removeAll()
             }
         }
-        .hanaTabSearchActivation()
 #endif
     }
 
@@ -225,7 +267,13 @@ struct ContentView: View {
 #if os(macOS)
             VideoDetailScreen(videoCode: code, isNavigationTop: macOSNavigationPath.last == .video(code))
 #else
-            VideoDetailScreen(videoCode: code)
+            VideoDetailScreen(
+                videoCode: code,
+                selectedPlaybackLinkID: Binding(
+                    get: { playbackLinkIDs[code] ?? "" },
+                    set: { playbackLinkIDs[code] = $0 }
+                )
+            )
 #endif
         case .search(let criteria):
             SearchScreen(initialCriteria: criteria)

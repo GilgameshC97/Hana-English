@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 struct SearchScreen: View {
     @Environment(HanaServices.self) private var services
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Query(sort: \SearchHistoryRecord.createdAt, order: .reverse) private var searchHistory: [SearchHistoryRecord]
     @Query(sort: \AdvancedSearchHistoryRecord.createdAt, order: .reverse) private var advancedSearchHistory: [AdvancedSearchHistoryRecord]
     private let locksQueryEditing: Bool
@@ -77,16 +78,23 @@ struct SearchScreen: View {
                                     .padding(.horizontal)
                             }
 
-                            ForEach(normalVideos) { video in
-                                NavigationLink(value: HanaRoute.video(video.videoCode)) {
-                                    HanaVideoListRow(info: video)
-                                        .padding(10)
-                                        .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 8))
-                                }
-                                .buttonStyle(.plain)
-                                .padding(.horizontal)
-                                .onAppear {
+                            if horizontalSizeClass == .regular, !normalVideos.isEmpty {
+                                SearchVideoGridLinks(videos: normalVideos) { video in
                                     preloadNextSearchPageIfNeeded(after: video, in: videos)
+                                }
+                                .padding(.horizontal)
+                            } else {
+                                ForEach(normalVideos) { video in
+                                    NavigationLink(value: HanaRoute.video(video.videoCode)) {
+                                        HanaVideoListRow(info: video)
+                                            .padding(10)
+                                            .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 8))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .padding(.horizontal)
+                                    .onAppear {
+                                        preloadNextSearchPageIfNeeded(after: video, in: videos)
+                                    }
                                 }
                             }
 
@@ -329,11 +337,15 @@ private struct SearchFilterToolbarButton: View {
 }
 
 private struct SearchVideoGridLinks: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     let videos: [HanimeInfo]
     var onVideoAppear: (HanimeInfo) -> Void = { _ in }
 
     private var minimumCardWidth: CGFloat {
-        videos.first?.style == .compact ? 132 : 180
+        if horizontalSizeClass == .regular {
+            return videos.first?.style == .compact ? 132 : 220
+        }
+        return videos.first?.style == .compact ? 132 : 180
     }
 
     private var columns: [GridItem] {

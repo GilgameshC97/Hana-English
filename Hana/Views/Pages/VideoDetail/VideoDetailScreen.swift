@@ -12,14 +12,40 @@ struct VideoDetailScreen: View {
     @AppStorage(HanaSettingsKey.warnBeforeMobileDataDownload) private var warnBeforeMobileDataDownload = true
     let videoCode: String
     var isNavigationTop = true
+    private let playbackLinkIDBinding: Binding<String>?
+    @State private var fallbackPlaybackLinkID = ""
     @State private var state: LoadableState<HanimeVideo> = .idle
     @State private var loadingVideoCode: String?
     @State private var selectedTopTab: HanaVideoDetailTopTab = .details
-    @State private var selectedPlaybackLinkID = ""
     @State private var activePlayer: AVPlayer?
     @State private var isPlayerFullscreenPresented = false
     @State private var addedDownloadLinkID: String?
     @State private var pendingAutomaticDownload: DownloadQueueRecord?
+
+    init(
+        videoCode: String,
+        isNavigationTop: Bool = true,
+        selectedPlaybackLinkID: Binding<String>? = nil
+    ) {
+        self.videoCode = videoCode
+        self.isNavigationTop = isNavigationTop
+        playbackLinkIDBinding = selectedPlaybackLinkID
+    }
+
+    private var selectedPlaybackLinkID: String {
+        get { playbackLinkIDBinding?.wrappedValue ?? fallbackPlaybackLinkID }
+        nonmutating set {
+            if let playbackLinkIDBinding {
+                playbackLinkIDBinding.wrappedValue = newValue
+            } else {
+                fallbackPlaybackLinkID = newValue
+            }
+        }
+    }
+
+    private var selectedPlaybackLinkIDBindingValue: Binding<String> {
+        playbackLinkIDBinding ?? $fallbackPlaybackLinkID
+    }
 
     private var displayVideo: HanimeVideo? {
         switch state {
@@ -155,7 +181,7 @@ struct VideoDetailScreen: View {
         VStack(alignment: .leading, spacing: 16) {
             VideoPlayerPanel(
                 video: video,
-                selectedLinkID: $selectedPlaybackLinkID,
+                selectedLinkID: selectedPlaybackLinkIDBindingValue,
                 activePlayer: $activePlayer,
                 isFullscreenPresented: $isPlayerFullscreenPresented,
                 isActive: isNavigationTop
