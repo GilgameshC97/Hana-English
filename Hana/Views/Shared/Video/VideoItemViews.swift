@@ -50,6 +50,8 @@ struct HanaVideoListRowStyle: Hashable {
 
 struct HanaVideoGridCard: View {
     @AppStorage(HanaSettingsKey.showPlayedIndicator) private var showPlayedIndicator = true
+    @AppStorage(HanaSettingsKey.blurThumbnails) private var blurThumbnails = false
+    @AppStorage(HanaSettingsKey.privateMode) private var privateMode = false
     @Query private var watchHistory: [WatchHistoryRecord]
 
     let title: String
@@ -105,8 +107,9 @@ struct HanaVideoGridCard: View {
                 cornerRadius: style.coverCornerRadius,
                 aspectRatio: style.coverAspectRatio
             )
+            .blur(radius: blurThumbnails || privateMode ? 14 : 0)
 
-            Text(title)
+            Text(privateMode ? "Private Content" : title)
                 .font(style.titleFont)
                 .lineLimit(style.titleLineLimit, reservesSpace: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -180,6 +183,8 @@ struct HanaVideoGridLinks: View {
 
 struct HanaVideoListRow: View {
     @AppStorage(HanaSettingsKey.showPlayedIndicator) private var showPlayedIndicator = true
+    @AppStorage(HanaSettingsKey.blurThumbnails) private var blurThumbnails = false
+    @AppStorage(HanaSettingsKey.privateMode) private var privateMode = false
     @Query private var watchHistory: [WatchHistoryRecord]
 
     let title: String
@@ -226,9 +231,10 @@ struct HanaVideoListRow: View {
                 cornerRadius: style.coverCornerRadius
             )
             .frame(width: style.coverSize.width, height: style.coverSize.height)
+            .blur(radius: blurThumbnails || privateMode ? 14 : 0)
 
             VStack(alignment: .leading, spacing: style.textSpacing) {
-                Text(title)
+                Text(privateMode ? "Private Content" : title)
                     .font(style.titleFont)
                     .lineLimit(style.titleLineLimit)
 

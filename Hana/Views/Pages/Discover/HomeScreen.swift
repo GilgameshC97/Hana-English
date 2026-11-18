@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 
 struct HomeScreen: View {
     @Environment(HanaServices.self) private var services
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var state: LoadableState<HanimeHomePage> = .idle
 
     var body: some View {
@@ -40,6 +41,7 @@ struct HomeScreen: View {
                 }
             }
         }
+        .frame(maxWidth: horizontalSizeClass == .regular ? 1200 : .infinity, alignment: .top)
         .navigationTitle("Hana")
         .hanaMobileNavigationChrome()
         .task {

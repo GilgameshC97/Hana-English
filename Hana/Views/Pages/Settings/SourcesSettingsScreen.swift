@@ -15,7 +15,7 @@ struct SourcesSettingsScreen: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(source.name).font(.headline)
-                            Text("\(source.type.rawValue) · \(source.baseURL)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            Text("\(source.type.rawValue) ? \(source.baseURL)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
                             if let connected = source.isConnected {
                                 Label(connected ? "Connected" : "Disconnected", systemImage: connected ? "checkmark.circle.fill" : "xmark.circle.fill")
                                     .font(.caption).foregroundStyle(connected ? .green : .red)

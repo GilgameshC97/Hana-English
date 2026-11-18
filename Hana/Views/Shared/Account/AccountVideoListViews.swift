@@ -35,6 +35,9 @@ enum AccountVideoListSort: String, CaseIterable, Identifiable {
 
 struct AccountVideoListScreen: View {
     @Environment(HanaServices.self) private var services
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @AppStorage(HanaSettingsKey.hideWatchedItems) private var hideWatchedItems = false
+    @Query private var watchHistory: [WatchHistoryRecord]
     let kind: HanimeMyListKind
     let title: String
     let emptyTitle: String
@@ -70,6 +73,7 @@ struct AccountVideoListScreen: View {
                 )
             }
         }
+        .frame(maxWidth: horizontalSizeClass == .regular ? 1200 : .infinity, alignment: .top)
         .navigationTitle(title)
         .searchable(text: $filterText, prompt: "Filter \(title)")
         .toolbar {
@@ -292,7 +296,12 @@ struct AccountVideoListScreen: View {
                     || (video.artist?.localizedCaseInsensitiveContains(filtered) == true)
             }
         }
-        return sort.sorted(videos)
+        let visible = hideWatchedItems
+            ? videos.filter { video in
+                !watchHistory.contains { $0.videoCode == video.videoCode && $0.isWatched }
+            }
+            : videos
+        return sort.sorted(visible)
     }
 
     private var isEditing: Bool {
