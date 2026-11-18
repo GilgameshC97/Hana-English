@@ -1118,6 +1118,7 @@ private struct NetworkSettingsScreen: View {
     @State private var isTestingLatency = false
     @State private var isApplyingNetworkSettings = false
     @State private var isCredentialLoginPresented = false
+    @State private var isNetworkSelectionReady = false
 
     var body: some View {
         Form {
@@ -1270,11 +1271,12 @@ private struct NetworkSettingsScreen: View {
             SiteCredentialLoginSheet()
         }
         .onAppear {
+            isNetworkSelectionReady = false
             selectedBaseURL = services.httpClient.baseURL.absoluteString
+            isNetworkSelectionReady = true
         }
-        .onChange(of: selectedBaseURL) { _, newValue in
-            guard newValue != services.httpClient.baseURL.absoluteString else { return }
-            applySiteBaseURL(newValue)
+        .onChange(of: selectedBaseURL) { _, _ in
+            guard isNetworkSelectionReady else { return }
         }
     }
 
@@ -1291,11 +1293,18 @@ private struct NetworkSettingsScreen: View {
             alertMessage = .error("Invalid proxy port")
             return
         }
+        guard let normalized = HanaSiteBaseURL.normalized(selectedBaseURL),
+              let url = URL(string: normalized) else {
+            alertMessage = .error("Invalid URL")
+            return
+        }
 
         isApplyingNetworkSettings = true
         defer { isApplyingNetworkSettings = false }
+        storedSiteBaseURL = normalized
+        selectedBaseURL = normalized
         await services.siteSession.invalidateCloudflareVerification()
-        reloadServices(services.httpClient.baseURL)
+        reloadServices(url)
         toastMessage = .success("Network settings applied")
     }
 
@@ -1359,28 +1368,6 @@ private struct NetworkSettingsScreen: View {
         }
     }
 
-    private func applySiteBaseURL(_ value: String) {
-        guard let normalized = HanaSiteBaseURL.normalized(value),
-              let url = URL(string: normalized) else {
-            alertMessage = .error("Invalid URL")
-            return
-        }
-        if services.httpClient.baseURL.absoluteString == normalized {
-            storedSiteBaseURL = normalized
-            selectedBaseURL = normalized
-            toastMessage = .info("Currently using this URL")
-            return
-        }
-        guard !services.downloadClient.hasActiveDownloads else {
-            selectedBaseURL = services.httpClient.baseURL.absoluteString
-            alertMessage = .error("Download in progress. Finish before switching.")
-            return
-        }
-        storedSiteBaseURL = normalized
-        selectedBaseURL = normalized
-        reloadServices(url)
-        toastMessage = .success("Switched to \(url.host() ?? normalized)")
-    }
 }
 
 private struct SiteLatencyResult: Identifiable, Hashable {
