@@ -107,6 +107,7 @@ final class SiteWebSession: HanaCloudflareChallengeResolving {
 
     private let defaults: UserDefaults
     private let cookieStore: HanaSessionCookieStore
+    let profileID: UUID?
     private let now: () -> Date
     private let cloudflareWebInvalidator: (() async -> Void)?
     private var cloudflarePreparationID: UUID?
@@ -121,7 +122,7 @@ final class SiteWebSession: HanaCloudflareChallengeResolving {
     private static let legacyAvatarURLStringKey = "Hana.SiteWebSession.avatarURLString"
 
     private var keySuffix: String {
-        Self.keySuffix(for: baseURL)
+        profileID.map({ HanaSessionCookieStore.profileKeySuffix($0) }) ?? Self.keySuffix(for: baseURL)
     }
 
     private var isLoggedInKey: String {
@@ -188,23 +189,25 @@ final class SiteWebSession: HanaCloudflareChallengeResolving {
     }
 
     private var storedCookieHeader: String? {
-        cookieStore.cookieHeader(for: baseURL)
+        cookieStore.cookieHeader(for: baseURL, profileID: profileID)
     }
 
     init(
         baseURL: URL,
         defaults: UserDefaults = .standard,
         cookieStore: HanaSessionCookieStore,
+        profileID: UUID? = nil,
         now: @escaping () -> Date = Date.init,
         cloudflareWebInvalidator: (() async -> Void)? = nil
     ) {
         self.baseURL = baseURL
         self.defaults = defaults
         self.cookieStore = cookieStore
+        self.profileID = profileID
         self.now = now
         self.cloudflareWebInvalidator = cloudflareWebInvalidator
         let legacyHost = baseURL.host() == URL(string: HanaSiteBaseURL.defaultValue)?.host()
-        let keySuffix = Self.keySuffix(for: baseURL)
+        let keySuffix = profileID.map({ HanaSessionCookieStore.profileKeySuffix($0) }) ?? Self.keySuffix(for: baseURL)
         let isLoggedInKey = Self.scopedKey("isLoggedIn", suffix: keySuffix)
         let userIDKey = Self.scopedKey("userID", suffix: keySuffix)
         let usernameKey = Self.scopedKey("username", suffix: keySuffix)
@@ -370,7 +373,7 @@ final class SiteWebSession: HanaCloudflareChallengeResolving {
             from: scopedCookies,
             preservingStoredCloudflareClearance: !acceptsCloudflareClearance
         ) {
-            cookieStore.saveCookieHeader(cookieHeader, for: baseURL)
+            cookieStore.saveCookieHeader(cookieHeader, for: baseURL, profileID: profileID)
             if acceptsCloudflareClearance {
                 updateCloudflareExpiryMetadata(from: scopedCookies)
             }
@@ -435,7 +438,7 @@ final class SiteWebSession: HanaCloudflareChallengeResolving {
         userID = nil
         username = nil
         avatarURLString = nil
-        cookieStore.removeCookieHeader(for: baseURL)
+        cookieStore.removeCookieHeader(for: baseURL, profileID: profileID)
         defaults.set(false, forKey: isLoggedInKey)
         defaults.removeObject(forKey: userIDKey)
         defaults.removeObject(forKey: usernameKey)
@@ -659,9 +662,9 @@ final class SiteWebSession: HanaCloudflareChallengeResolving {
             .map { "\($0.name)=\($0.value)" }
             .joined(separator: "; ")
         if remainingHeader.isEmpty {
-            cookieStore.removeCookieHeader(for: baseURL)
+            cookieStore.removeCookieHeader(for: baseURL, profileID: profileID)
         } else {
-            cookieStore.saveCookieHeader(remainingHeader, for: baseURL)
+            cookieStore.saveCookieHeader(remainingHeader, for: baseURL, profileID: profileID)
         }
         lastSyncedCookieCount = remainingPairs.count
     }

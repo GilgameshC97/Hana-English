@@ -26,6 +26,21 @@ struct HanaSource: Identifiable, Codable, Equatable {
     var browseEndpoint: String
     var lastTestAt: Date?
     var isConnected: Bool?
+    var profileID: UUID?
+
+    init(id: UUID, name: String, baseURL: String, type: HanaSourceType, enabled: Bool,
+         searchEndpoint: String, browseEndpoint: String, lastTestAt: Date?, isConnected: Bool?, profileID: UUID? = nil) {
+        self.id = id
+        self.name = name
+        self.baseURL = baseURL
+        self.type = type
+        self.enabled = enabled
+        self.searchEndpoint = searchEndpoint
+        self.browseEndpoint = browseEndpoint
+        self.lastTestAt = lastTestAt
+        self.isConnected = isConnected
+        self.profileID = profileID
+    }
 }
 
 struct HanaSourceSearchResult: Identifiable, Hashable {
@@ -34,6 +49,15 @@ struct HanaSourceSearchResult: Identifiable, Hashable {
     let sourceName: String
     let sourceID: UUID
     let detailURL: URL?
+    let profileName: String?
+
+    init(title: String, sourceName: String, sourceID: UUID, detailURL: URL?, profileName: String? = nil) {
+        self.title = title
+        self.sourceName = sourceName
+        self.sourceID = sourceID
+        self.detailURL = detailURL
+        self.profileName = profileName
+    }
 }
 
 @Observable
@@ -133,17 +157,24 @@ final class HanaSourceManager {
         }
     }
 
+    static func profileName(for profileID: UUID?) -> String? {
+        guard let profileID,
+              let data = UserDefaults.standard.data(forKey: HanaSiteProfileManager.storageKey),
+              let profiles = try? JSONDecoder().decode([SiteProfile].self, from: data) else { return nil }
+        return profiles.first(where: { $0.id == profileID })?.displayName
+    }
+
     func resolveLookup(_ text: String) async -> HanaSourceSearchResult? {
         let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return nil }
         let url = URL(string: value)
         for source in sources where source.enabled {
             if let url, url.absoluteString.contains(source.baseURL.replacingOccurrences(of: "/", with: "")) {
-                return HanaSourceSearchResult(title: url.lastPathComponent, sourceName: source.name, sourceID: source.id, detailURL: url)
+                return HanaSourceSearchResult(title: url.lastPathComponent, sourceName: source.name, sourceID: source.id, detailURL: url, profileName: Self.profileName(for: source.profileID))
             }
             if let sourceURL = URL(string: source.baseURL),
                let detail = URL(string: "\(sourceURL.absoluteString)\(value)") {
-                return HanaSourceSearchResult(title: value, sourceName: source.name, sourceID: source.id, detailURL: detail)
+                return HanaSourceSearchResult(title: value, sourceName: source.name, sourceID: source.id, detailURL: detail, profileName: Self.profileName(for: source.profileID))
             }
         }
         return nil
@@ -188,7 +219,7 @@ struct HanaSourceSearchAdapter {
                 if match.range(at: 1).location != NSNotFound, let hrefRange = Range(match.range(at: 1), in: html) {
                     detail = URL(string: String(html[hrefRange]), relativeTo: url)?.absoluteURL
                 }
-                output.append(HanaSourceSearchResult(title: title, sourceName: source.name, sourceID: source.id, detailURL: detail))
+                output.append(HanaSourceSearchResult(title: title, sourceName: source.name, sourceID: source.id, detailURL: detail, profileName: HanaSourceManager.profileName(for: source.profileID)))
             }
             return output
         } catch { return [] }
@@ -202,7 +233,7 @@ struct HanaSourceSearchAdapter {
             return (json ?? []).compactMap { item in
                 guard let title = item["title"] as? String else { return nil }
                 let detail = (item["url"] as? String).flatMap(URL.init(string:))
-                return HanaSourceSearchResult(title: title, sourceName: source.name, sourceID: source.id, detailURL: detail)
+                return HanaSourceSearchResult(title: title, sourceName: source.name, sourceID: source.id, detailURL: detail, profileName: HanaSourceManager.profileName(for: source.profileID))
             }
         } catch { return [] }
     }

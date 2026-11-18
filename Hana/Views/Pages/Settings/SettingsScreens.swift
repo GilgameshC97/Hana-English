@@ -1106,6 +1106,7 @@ private struct ThemeColorOptionLabel: View {
 
 private struct NetworkSettingsScreen: View {
     @Environment(HanaServices.self) private var services
+    @Environment(HanaSiteProfileManager.self) private var siteProfiles
     @Environment(\.hanaReloadServices) private var reloadServices
     @AppStorage(HanaSettingsKey.siteBaseURL) private var storedSiteBaseURL = HanaSiteBaseURL.defaultValue
     @AppStorage(HanaSettingsKey.networkProxyMode) private var proxyMode = HanaNetworkProxyMode.system.rawValue
@@ -1276,6 +1277,20 @@ private struct NetworkSettingsScreen: View {
 
             Section("Verification") {
                 Button {
+                    Task {
+                        if let profileID = siteProfiles.activeProfile?.id {
+                            siteProfiles.setLoginMetadata(profileID, state: .syncing)
+                        }
+                        await services.siteSession.syncDefaultWebCookies()
+                        if let profileID = siteProfiles.activeProfile?.id {
+                            siteProfiles.setLoginMetadata(profileID, state: services.siteSession.isLoggedIn ? .loggedIn : .loggedOut, lastSync: services.siteSession.lastCookieSyncAt)
+                        }
+                        cookieCount = services.siteSession.lastSyncedCookieCount
+                    }
+                } label: {
+                    Label("Cookie Sync", systemImage: "arrow.trianglehead.2.clockwise")
+                }
+                Button {
                     services.siteSession.requestLogin()
                 } label: {
                     Label("Log In", systemImage: "person.crop.circle")
@@ -1286,7 +1301,12 @@ private struct NetworkSettingsScreen: View {
                     Label("Account Login", systemImage: "key")
                 }
                 Button(role: .destructive) {
-                    Task { await services.logout() }
+                    Task {
+                        await services.logout()
+                        if let profileID = siteProfiles.activeProfile?.id {
+                            siteProfiles.setLoginMetadata(profileID, state: .loggedOut)
+                        }
+                    }
                 } label: {
                     Label("Clear Site Login State", systemImage: "trash")
                 }

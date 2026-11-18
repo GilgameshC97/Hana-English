@@ -57,12 +57,16 @@ struct SearchScreen: View {
                                         if let detailURL = result.detailURL {
                                             Link(destination: detailURL) {
                                                 HStack {
-                                                    VStack(alignment: .leading) { Text(result.title).lineLimit(2); Text(result.sourceName).font(.caption).foregroundStyle(.secondary) }
+                                                    VStack(alignment: .leading) {
+                                                        Text(result.title).lineLimit(2)
+                                                        Text([result.profileName, result.sourceName].compactMap { $0 }.joined(separator: " · "))
+                                                            .font(.caption).foregroundStyle(.secondary)
+                                                    }
                                                     Spacer()
                                                 }.padding(8).background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 8))
                                             }.buttonStyle(.plain)
                                         } else {
-                                            Text("\(result.title) · \(result.sourceName)")
+                                            Text("\(result.title) · \([result.profileName, result.sourceName].compactMap { $0 }.joined(separator: " · "))")
                                         }
                                     }
                                 }.padding(.horizontal)

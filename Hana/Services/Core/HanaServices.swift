@@ -20,9 +20,9 @@ final class HanaServices {
     @ObservationIgnored private var memoryWarningObserver: NSObjectProtocol?
 #endif
 
-    init(baseURL: URL = HanaServices.configuredBaseURL()) {
+    init(baseURL: URL = HanaServices.configuredBaseURL(), profileID: UUID? = nil) {
         let sessionCookieStore = HanaSessionCookieStore()
-        let siteSession = SiteWebSession(baseURL: baseURL, cookieStore: sessionCookieStore)
+        let siteSession = SiteWebSession(baseURL: baseURL, cookieStore: sessionCookieStore, profileID: profileID)
         let httpClient = HanaHTTPClient(
             baseURL: baseURL,
             sessionCookieStore: sessionCookieStore,
@@ -75,6 +75,6 @@ final class HanaServices {
         if normalized != stored {
             defaults.set(normalized, forKey: HanaSettingsKey.siteBaseURL)
         }
-        return URL(string: normalized) ?? URL(string: HanaSiteBaseURL.defaultValue)!
+        return URL(string: normalized) ?? URL(string: HanaSiteBaseURL.defaultValue) ?? URL(fileURLWithPath: "/")
     }
 }

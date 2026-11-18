@@ -57,8 +57,21 @@ struct HanaApp: App {
 #if canImport(UIKit) && os(iOS)
     @UIApplicationDelegateAdaptor(HanaAppDelegate.self) private var appDelegate
 #endif
-    @State private var services = HanaServices()
+    @State private var siteProfiles = HanaSiteProfileManager()
+    @State private var services: HanaServices
     @State private var servicesIdentity = UUID()
+
+    init() {
+        let profiles = HanaSiteProfileManager()
+        _siteProfiles = State(initialValue: profiles)
+        if let active = profiles.activeProfile,
+           let baseURL = HanaSiteBaseURL.normalized(active.baseURL) {
+            let fallbackURL = URL(string: HanaSiteBaseURL.defaultValue) ?? URL(string: "https://hanime1.me") ?? URL(fileURLWithPath: "/")
+            _services = State(initialValue: HanaServices(baseURL: URL(string: baseURL) ?? fallbackURL, profileID: active.id))
+        } else {
+            _services = State(initialValue: HanaServices())
+        }
+    }
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -87,6 +100,7 @@ struct HanaApp: App {
             ContentView()
                 .id(servicesIdentity)
                 .environment(services)
+                .environment(siteProfiles)
                 .environment(\.hanaReloadServices, reloadServicesAction)
         }
         .modelContainer(sharedModelContainer)
@@ -97,6 +111,7 @@ struct HanaApp: App {
                 Button("Settings...") {
                     HanaSettingsWindowController.shared.open(
                         services: services,
+                        siteProfiles: siteProfiles,
                         reloadServicesAction: reloadServicesAction,
                         modelContainer: sharedModelContainer
                     )
@@ -110,7 +125,8 @@ struct HanaApp: App {
     private var reloadServicesAction: HanaServiceReloadAction {
         HanaServiceReloadAction { baseURL in
             services.siteSession.cancel()
-            services = HanaServices(baseURL: baseURL)
+            let profileID = siteProfiles.activeProfile?.id
+            services = HanaServices(baseURL: baseURL, profileID: profileID)
             servicesIdentity = UUID()
         }
     }
@@ -127,11 +143,13 @@ private final class HanaSettingsWindowController {
 
     func open(
         services: HanaServices,
+        siteProfiles: HanaSiteProfileManager,
         reloadServicesAction: HanaServiceReloadAction,
         modelContainer: ModelContainer
     ) {
         let rootView = makeRootView(
             services: services,
+            siteProfiles: siteProfiles,
             reloadServicesAction: reloadServicesAction,
             modelContainer: modelContainer
         )
@@ -172,12 +190,14 @@ private final class HanaSettingsWindowController {
 
     private func makeRootView(
         services: HanaServices,
+        siteProfiles: HanaSiteProfileManager,
         reloadServicesAction: HanaServiceReloadAction,
         modelContainer: ModelContainer
     ) -> AnyView {
         AnyView(
             SettingsScreen()
                 .environment(services)
+                .environment(siteProfiles)
                 .environment(\.hanaReloadServices, reloadServicesAction)
                 .modelContainer(modelContainer)
                 .frame(minWidth: 680, minHeight: 600)

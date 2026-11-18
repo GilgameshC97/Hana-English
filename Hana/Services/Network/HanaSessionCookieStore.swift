@@ -93,8 +93,22 @@ final class HanaSessionCookieStore {
     self.defaults = defaults
   }
 
-  func cookieHeader(for baseURL: URL) -> String? {
-    guard let account = Self.account(for: baseURL) else { return nil }
+  func cookieHeader(for baseURL: URL, profileID: UUID? = nil) -> String? {
+    guard let account = profileID.map({ Self.profileAccount($0) }) ?? Self.account(for: baseURL) else { return nil }
+
+    if profileID != nil {
+      if defaults.bool(forKey: Self.tombstoneKey(for: baseURL)) {
+        try? credentialStore.removeData(for: account)
+        defaults.removeObject(forKey: Self.tombstoneKey(for: baseURL))
+      }
+      do {
+        if let data = try credentialStore.data(for: account),
+           let header = String(data: data, encoding: .utf8), !header.isEmpty {
+          return header
+        }
+      } catch {}
+      return nil
+    }
 
     if defaults.bool(forKey: Self.tombstoneKey(for: baseURL)) {
       do {
@@ -127,9 +141,9 @@ final class HanaSessionCookieStore {
     return fallback
   }
 
-  func saveCookieHeader(_ header: String, for baseURL: URL) {
-    guard !header.isEmpty, let account = Self.account(for: baseURL) else {
-      removeCookieHeader(for: baseURL)
+  func saveCookieHeader(_ header: String, for baseURL: URL, profileID: UUID? = nil) {
+    guard !header.isEmpty, let account = profileID.map({ Self.profileAccount($0) }) ?? Self.account(for: baseURL) else {
+      removeCookieHeader(for: baseURL, profileID: profileID)
       return
     }
 
@@ -138,15 +152,17 @@ final class HanaSessionCookieStore {
       removeFallbackValues(for: baseURL)
       defaults.removeObject(forKey: Self.tombstoneKey(for: baseURL))
     } catch {
-      defaults.set(header, forKey: Self.fallbackKey(for: baseURL))
+      if profileID == nil {
+        defaults.set(header, forKey: Self.fallbackKey(for: baseURL))
+      }
       removeLegacyFallbackValue(for: baseURL)
       defaults.removeObject(forKey: Self.tombstoneKey(for: baseURL))
     }
   }
 
-  func removeCookieHeader(for baseURL: URL) {
+  func removeCookieHeader(for baseURL: URL, profileID: UUID? = nil) {
     removeFallbackValues(for: baseURL)
-    guard let account = Self.account(for: baseURL) else { return }
+    guard let account = profileID.map({ Self.profileAccount($0) }) ?? Self.account(for: baseURL) else { return }
 
     do {
       try credentialStore.removeData(for: account)
@@ -158,6 +174,14 @@ final class HanaSessionCookieStore {
 
   static func account(for baseURL: URL) -> String? {
     baseURL.host()?.lowercased()
+  }
+
+  static func profileAccount(_ profileID: UUID) -> String {
+    "hana.profile.\(profileID.uuidString).cookies"
+  }
+
+  static func profileKeySuffix(_ profileID: UUID) -> String {
+    "profile_\(profileID.uuidString)"
   }
 
   static func fallbackKey(for baseURL: URL) -> String {

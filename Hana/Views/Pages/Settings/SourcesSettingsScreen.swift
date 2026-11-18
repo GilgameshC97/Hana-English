@@ -48,6 +48,9 @@ struct SourcesSettingsScreen: View {
                 }
                 if let lookupResult {
                     LabeledContent("Source", value: lookupResult.sourceName)
+                    if let profileName = lookupResult.profileName {
+                        LabeledContent("Site Profile", value: profileName)
+                    }
                     if let detailURL = lookupResult.detailURL {
                         Link("Open \(detailURL.host() ?? lookupResult.title)", destination: detailURL)
                     }
@@ -97,6 +100,7 @@ struct SourcesSettingsScreen: View {
 
 private struct SourceEditorSheet: View {
     @Binding var source: HanaSource
+    @Environment(HanaSiteProfileManager.self) private var siteProfiles
     let manager: HanaSourceManager
     @Binding var testMessage: String
     @Environment(\.dismiss) private var dismiss
@@ -109,6 +113,12 @@ private struct SourceEditorSheet: View {
                     .keyboardType(.URL)
                 Picker("Source Type", selection: $source.type) {
                     ForEach(HanaSourceType.allCases) { Text($0.rawValue).tag($0) }
+                }
+                Picker("Site Profile", selection: $source.profileID) {
+                    Text("None").tag(nil as UUID?)
+                    ForEach(siteProfiles.profiles) { profile in
+                        Text(profile.displayName).tag(profile.id as UUID?)
+                    }
                 }
                 TextField("Search Endpoint", text: $source.searchEndpoint)
                 TextField("Browse Endpoint", text: $source.browseEndpoint)

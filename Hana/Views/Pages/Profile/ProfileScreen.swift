@@ -11,17 +11,24 @@ private enum ProfileAccountSummaryState: Equatable {
 
 struct ProfileScreen: View {
     @Environment(HanaServices.self) private var services
+    @Environment(HanaSiteProfileManager.self) private var siteProfiles
+    @Environment(\.hanaReloadServices) private var reloadServices
     @Query(sort: \WatchHistoryRecord.watchDate, order: .reverse) private var watchHistory: [WatchHistoryRecord]
     @Query(sort: \DownloadQueueRecord.createdAt, order: .reverse) private var downloadQueue: [DownloadQueueRecord]
     @Query(sort: \HKeyframeRecord.updatedAt, order: .reverse) private var hKeyframeRecords: [HKeyframeRecord]
     @AppStorage(HanaSettingsKey.privateMode) private var privateMode = false
     @State private var accountSummaryState: ProfileAccountSummaryState = .idle
+    @State private var editingProfile: SiteProfile?
+    @State private var isProfileEditorPresented = false
 
     var body: some View {
         content
             .navigationTitle("Profile")
             .task(id: accountSummaryTaskID) {
                 await loadAccountSummary()
+            }
+            .sheet(isPresented: $isProfileEditorPresented) {
+                SiteProfileEditorSheet(profile: $editingProfile, manager: siteProfiles)
             }
     }
 
@@ -36,6 +43,37 @@ struct ProfileScreen: View {
 
     private var mobileContent: some View {
         List {
+            Section("Site Profiles") {
+                ForEach(siteProfiles.profiles) { profile in
+                    Button {
+                        activate(profile)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(profile.displayName).font(.headline)
+                                Text(profile.baseURL).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            }
+                            Spacer()
+                            if siteProfiles.activeProfileID == profile.id {
+                                Image(systemName: "checkmark.circle.fill").foregroundStyle(.tint)
+                            }
+                        }
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button("Edit") { editingProfile = profile; isProfileEditorPresented = true }
+                        if siteProfiles.profiles.count > 1 {
+                            Button("Delete", role: .destructive) { siteProfiles.delete(profile) }
+                        }
+                    }
+                }
+                .onMove(perform: siteProfiles.move)
+
+                Button("Add Profile", systemImage: "plus") {
+                    editingProfile = SiteProfile(id: UUID(), displayName: "", baseURL: "", loginType: .cookieSync, sourceID: nil, enabled: true, loginState: .loggedOut, lastCookieSyncAt: nil, error: nil)
+                    isProfileEditorPresented = true
+                }
+            }
+
             Section {
                 profileHeaderLink
             }
@@ -94,6 +132,26 @@ struct ProfileScreen: View {
     private var macOSContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Site Profiles").font(.headline)
+                    ForEach(siteProfiles.profiles) { profile in
+                        HStack {
+                            Button(profile.displayName) { activate(profile) }
+                            Text(profile.baseURL).font(.caption).foregroundStyle(.secondary)
+                            Spacer()
+                            if siteProfiles.activeProfileID == profile.id { Image(systemName: "checkmark.circle.fill") }
+                            Button("Edit") { editingProfile = profile; isProfileEditorPresented = true }
+                            if siteProfiles.profiles.count > 1 {
+                                Button("Delete", role: .destructive) { siteProfiles.delete(profile) }
+                            }
+                        }
+                    }
+                    Button("Add Profile", systemImage: "plus") {
+                        editingProfile = SiteProfile(id: UUID(), displayName: "", baseURL: "", loginType: .cookieSync, sourceID: nil, enabled: true, loginState: .loggedOut, lastCookieSyncAt: nil, error: nil)
+                        isProfileEditorPresented = true
+                    }
+                }
+
                 profileHeaderLink
                     .buttonStyle(.plain)
 
@@ -158,6 +216,13 @@ struct ProfileScreen: View {
             )
             .blur(radius: privateMode ? 8 : 0)
         }
+    }
+
+    private func activate(_ profile: SiteProfile) {
+        guard let baseURL = HanaSiteBaseURL.normalized(profile.baseURL),
+              let url = URL(string: baseURL) else { return }
+        siteProfiles.activate(profile)
+        reloadServices(url)
     }
 
     private var accountSummaryTaskID: String {
@@ -274,6 +339,46 @@ struct ProfileScreen: View {
             count += nextPage.playlists.count
         }
         return count
+    }
+}
+
+private struct SiteProfileEditorSheet: View {
+    @Binding var profile: SiteProfile?
+    let manager: HanaSiteProfileManager
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft: SiteProfile
+
+    init(profile: Binding<SiteProfile?>, manager: HanaSiteProfileManager) {
+        _profile = profile
+        self.manager = manager
+        _draft = State(initialValue: profile.wrappedValue ?? SiteProfile(id: UUID(), displayName: "", baseURL: "", loginType: .cookieSync, sourceID: nil, enabled: true, loginState: .loggedOut, lastCookieSyncAt: nil, error: nil))
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                TextField("Display Name", text: $draft.displayName)
+                TextField("Base URL", text: $draft.baseURL).textInputAutocapitalization(.never).keyboardType(.URL)
+                Picker("Login Type", selection: $draft.loginType) {
+                    ForEach(HanaLoginType.allCases) { Text($0.rawValue).tag($0) }
+                }
+                Toggle("Enabled", isOn: $draft.enabled)
+            }
+            .navigationTitle(profile == nil ? "Add Profile" : "Edit Profile")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        guard let normalized = HanaSiteBaseURL.normalized(draft.baseURL),
+                              !draft.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                        draft.baseURL = normalized
+                        if manager.profiles.contains(where: { $0.id == draft.id }) { manager.update(draft) } else { manager.add(draft) }
+                        profile = draft
+                        dismiss()
+                    }.disabled(draft.displayName.isEmpty || draft.baseURL.isEmpty)
+                }
+            }
+        }
     }
 }
 

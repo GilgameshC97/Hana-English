@@ -35,6 +35,7 @@ struct LoginRequiredView: View {
 
 struct SiteCredentialLoginSheet: View {
     @Environment(HanaServices.self) private var services
+    @Environment(HanaSiteProfileManager.self) private var siteProfiles
     @Environment(\.dismiss) private var dismiss
     @State private var email = ""
     @State private var password = ""
@@ -98,6 +99,10 @@ struct SiteCredentialLoginSheet: View {
             )
             services.siteSession.syncSharedHTTPCookies()
             await services.applyLoginState(user: user)
+            if let profileID = siteProfiles.activeProfile?.id {
+                siteProfiles.saveAccountCredential(profileID: profileID, email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
+                siteProfiles.setLoginMetadata(profileID, state: .loggedIn)
+            }
             dismiss()
         } catch {
             if services.siteSession.handle(error) {
