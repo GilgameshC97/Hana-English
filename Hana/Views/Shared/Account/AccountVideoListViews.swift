@@ -246,12 +246,12 @@ struct AccountVideoListScreen: View {
                                             preloadNextPageIfNeeded(after: video, in: videos, maxPage: page.maxPage)
                                         }
                                 }
-                            }
-                            .onDelete { offsets in
-                                let videosToDelete = offsets.compactMap { index in
-                                    normalVideos.indices.contains(index) ? normalVideos[index] : nil
+                                .onDelete { offsets in
+                                    let videosToDelete = offsets.compactMap { index in
+                                        normalVideos.indices.contains(index) ? normalVideos[index] : nil
+                                    }
+                                    Task { await deleteVideos(videosToDelete, from: page) }
                                 }
-                                Task { await deleteVideos(videosToDelete, from: page) }
                             }
                         }
 

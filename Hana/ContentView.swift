@@ -168,22 +168,12 @@ struct ContentView: View {
 #else
         if horizontalSizeClass == .regular {
             NavigationSplitView {
-                List(selection: $selectedTab) {
-                    NavigationLink(value: AppTab.discover) {
-                        Label("Discover", systemImage: "sparkles")
-                    }
-                    NavigationLink(value: AppTab.subscriptions) {
-                        Label("Subscriptions", systemImage: "play.rectangle.on.rectangle")
-                    }
-                    NavigationLink(value: AppTab.favorites) {
-                        Label("Favorites", systemImage: "heart")
-                    }
-                    NavigationLink(value: AppTab.profile) {
-                        Label("Profile", systemImage: "person.crop.circle")
-                    }
-                    NavigationLink(value: AppTab.search) {
-                        Label("Search", systemImage: "magnifyingglass")
-                    }
+                List {
+                    iOSSplitSidebarButton(title: "Discover", systemImage: "sparkles", tab: .discover, selectedTab: $selectedTab)
+                    iOSSplitSidebarButton(title: "Subscriptions", systemImage: "play.rectangle.on.rectangle", tab: .subscriptions, selectedTab: $selectedTab)
+                    iOSSplitSidebarButton(title: "Favorites", systemImage: "heart", tab: .favorites, selectedTab: $selectedTab)
+                    iOSSplitSidebarButton(title: "Profile", systemImage: "person.crop.circle", tab: .profile, selectedTab: $selectedTab)
+                    iOSSplitSidebarButton(title: "Search", systemImage: "magnifyingglass", tab: .search, selectedTab: $selectedTab)
                 }
                 .listStyle(.sidebar)
                 .navigationTitle("Hana")
@@ -417,6 +407,27 @@ private struct MacOSSidebarProfileAvatar: View {
     }
 }
 #endif
+
+private struct iOSSplitSidebarButton: View {
+    let title: String
+    let systemImage: String
+    let tab: AppTab
+    @Binding var selectedTab: AppTab
+
+    var body: some View {
+        Button {
+            selectedTab = tab
+        } label: {
+            Label(title, systemImage: systemImage)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .listRowBackground(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(selectedTab == tab ? Color.accentColor.opacity(0.16) : Color.clear)
+        )
+    }
+}
 
 private struct ProfileTabLabel: View {
     @Environment(HanaServices.self) private var services
