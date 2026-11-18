@@ -1,0 +1,705 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		F44DB4902FB760000C55FF9 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = F44DB4922FB760000C55FF9 /* SwiftSoup */; };
+		F44DB4932FB760000C55FF9 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = F44DB4952FB760000C55FF9 /* Nuke */; };
+		F44DB4942FB760000C55FF9 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = F44DB4962FB760000C55FF9 /* NukeUI */; };
+		F44DB4A92FB762000C55FF9 /* AppBuildInfoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44DB4A12FB762000C55FF9 /* AppBuildInfoTests.swift */; };
+		F44DB4B12FB762000C55FF9 /* HanaBackupServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44DB4B02FB762000C55FF9 /* HanaBackupServiceTests.swift */; };
+		F44DB4B12FB763000C55FF9 /* DownloadResumeStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44DB4B02FB763000C55FF9 /* DownloadResumeStateTests.swift */; };
+		F44DB4B02FB7A0000C55FF9 /* HanimeSearchContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44DB4B12FB7A0000C55FF9 /* HanimeSearchContractTests.swift */; };
+		F44DB4B22FB7A0000C55FF9 /* HanimeVideoDeduplicationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44DB4B32FB7A0000C55FF9 /* HanimeVideoDeduplicationTests.swift */; };
+		F44DB4B42FB7A0000C55FF9 /* HanimeDuplicateVideoParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44DB4B52FB7A0000C55FF9 /* HanimeDuplicateVideoParserTests.swift */; };
+		F44DB4B62FB7A0000C55FF9 /* duplicate-video-lists.html in Resources */ = {isa = PBXBuildFile; fileRef = F44DB4B72FB7A0000C55FF9 /* duplicate-video-lists.html */; };
+		F44DB4AE2FB762000C55FF9 /* DownloadDirectoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44DB4AF2FB762000C55FF9 /* DownloadDirectoryTests.swift */; };
+		F44DB4C52FB780000C55FF9 /* HanimeSeriesParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44DB4C02FB780000C55FF9 /* HanimeSeriesParserTests.swift */; };
+		F44DB4C62FB780000C55FF9 /* series-playlist-new.html in Resources */ = {isa = PBXBuildFile; fileRef = F44DB4C12FB780000C55FF9 /* series-playlist-new.html */; };
+		F44DB4C72FB780000C55FF9 /* series-playlist-legacy.html in Resources */ = {isa = PBXBuildFile; fileRef = F44DB4C22FB780000C55FF9 /* series-playlist-legacy.html */; };
+		F44DB4C82FB780000C55FF9 /* series-playlist-edge-cases.html in Resources */ = {isa = PBXBuildFile; fileRef = F44DB4C32FB780000C55FF9 /* series-playlist-edge-cases.html */; };
+		F44DB4C92FB780000C55FF9 /* video-without-series.html in Resources */ = {isa = PBXBuildFile; fileRef = F44DB4C42FB780000C55FF9 /* video-without-series.html */; };
+		F44DB4CC2FB780000C55FF9 /* series-playlist-legacy-direct-anchor.html in Resources */ = {isa = PBXBuildFile; fileRef = F44DB4CB2FB780000C55FF9 /* series-playlist-legacy-direct-anchor.html */; };
+		F44DB4B12FB770000C55FF9 /* HanaSessionCookieStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44DB4B02FB770000C55FF9 /* HanaSessionCookieStoreTests.swift */; };
+		F44DB4D02FB790000C55FF9 /* HanimeRelatedVideosParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44DB4D12FB790000C55FF9 /* HanimeRelatedVideosParserTests.swift */; };
+		F44DB4D22FB790000C55FF9 /* related-videos-normal.html in Resources */ = {isa = PBXBuildFile; fileRef = F44DB4D32FB790000C55FF9 /* related-videos-normal.html */; };
+		F44DB4D42FB790000C55FF9 /* related-videos-simplified.html in Resources */ = {isa = PBXBuildFile; fileRef = F44DB4D52FB790000C55FF9 /* related-videos-simplified.html */; };
+		F44DB4D72FB790000C55FF9 /* related-videos-grid.html in Resources */ = {isa = PBXBuildFile; fileRef = F44DB4D82FB790000C55FF9 /* related-videos-grid.html */; };
+		F4A100072FB8000000000007 /* HanimeHomeParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A100012FB8000000000001 /* HanimeHomeParserTests.swift */; };
+		F4A100082FB8000000000008 /* HanimeHomeRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A100022FB8000000000002 /* HanimeHomeRepositoryTests.swift */; };
+		F4A100092FB8000000000009 /* home-recommendations-reference.html in Resources */ = {isa = PBXBuildFile; fileRef = F4A100042FB8000000000004 /* home-recommendations-reference.html */; };
+		F4A1000A2FB800000000000A /* home-recommendations-compact.html in Resources */ = {isa = PBXBuildFile; fileRef = F4A100052FB8000000000005 /* home-recommendations-compact.html */; };
+		F4A1000B2FB800000000000B /* home-recommendations-unknown.html in Resources */ = {isa = PBXBuildFile; fileRef = F4A100062FB8000000000006 /* home-recommendations-unknown.html */; };
+		F4FADE022FB900000C55FF9 /* HanaHorizontalFadeMetricsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4FADE012FB900000C55FF9 /* HanaHorizontalFadeMetricsTests.swift */; };
+		F4A11D022FB900000C55FF9 /* HanaCompleteGridRowsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A11D012FB900000C55FF9 /* HanaCompleteGridRowsTests.swift */; };
+		F4FAFE022FB900000C55FF9 /* HanimeFavoriteRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4FAFE012FB900000C55FF9 /* HanimeFavoriteRepositoryTests.swift */; };
+		F4CFCF022FC0000000000002 /* HanaHTTPClientCloudflareTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CFCF012FC0000000000001 /* HanaHTTPClientCloudflareTests.swift */; };
+		F4CFD0022FC1000000000002 /* SiteWebSessionSheetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CFD0012FC1000000000001 /* SiteWebSessionSheetTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F44DB4AA2FB762000C55FF9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F44DB46B2FB7571400C55FF9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F44DB4722FB7571400C55FF9;
+			remoteInfo = Hana;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		F44DB4732FB7571400C55FF9 /* Hana.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hana.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F44DB4982FB761000C55FF9 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
+		F44DB4A02FB762000C55FF9 /* HanaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HanaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F44DB4A12FB762000C55FF9 /* AppBuildInfoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBuildInfoTests.swift; sourceTree = "<group>"; };
+		F44DB4B02FB762000C55FF9 /* HanaBackupServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanaBackupServiceTests.swift; sourceTree = "<group>"; };
+		F44DB4B02FB763000C55FF9 /* DownloadResumeStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadResumeStateTests.swift; sourceTree = "<group>"; };
+		F44DB4B12FB7A0000C55FF9 /* HanimeSearchContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanimeSearchContractTests.swift; sourceTree = "<group>"; };
+		F44DB4B32FB7A0000C55FF9 /* HanimeVideoDeduplicationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanimeVideoDeduplicationTests.swift; sourceTree = "<group>"; };
+		F44DB4B52FB7A0000C55FF9 /* HanimeDuplicateVideoParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanimeDuplicateVideoParserTests.swift; sourceTree = "<group>"; };
+		F44DB4B72FB7A0000C55FF9 /* duplicate-video-lists.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "duplicate-video-lists.html"; sourceTree = "<group>"; };
+		F44DB4AF2FB762000C55FF9 /* DownloadDirectoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadDirectoryTests.swift; sourceTree = "<group>"; };
+		F44DB4C02FB780000C55FF9 /* HanimeSeriesParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanimeSeriesParserTests.swift; sourceTree = "<group>"; };
+		F44DB4C12FB780000C55FF9 /* series-playlist-new.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "series-playlist-new.html"; sourceTree = "<group>"; };
+		F44DB4C22FB780000C55FF9 /* series-playlist-legacy.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "series-playlist-legacy.html"; sourceTree = "<group>"; };
+		F44DB4C32FB780000C55FF9 /* series-playlist-edge-cases.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "series-playlist-edge-cases.html"; sourceTree = "<group>"; };
+		F44DB4C42FB780000C55FF9 /* video-without-series.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "video-without-series.html"; sourceTree = "<group>"; };
+		F44DB4CB2FB780000C55FF9 /* series-playlist-legacy-direct-anchor.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "series-playlist-legacy-direct-anchor.html"; sourceTree = "<group>"; };
+		F44DB4B02FB770000C55FF9 /* HanaSessionCookieStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanaSessionCookieStoreTests.swift; sourceTree = "<group>"; };
+		F44DB4D12FB790000C55FF9 /* HanimeRelatedVideosParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanimeRelatedVideosParserTests.swift; sourceTree = "<group>"; };
+		F44DB4D32FB790000C55FF9 /* related-videos-normal.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "related-videos-normal.html"; sourceTree = "<group>"; };
+		F44DB4D52FB790000C55FF9 /* related-videos-simplified.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "related-videos-simplified.html"; sourceTree = "<group>"; };
+		F44DB4D82FB790000C55FF9 /* related-videos-grid.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "related-videos-grid.html"; sourceTree = "<group>"; };
+		F4A100012FB8000000000001 /* HanimeHomeParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanimeHomeParserTests.swift; sourceTree = "<group>"; };
+		F4A100022FB8000000000002 /* HanimeHomeRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanimeHomeRepositoryTests.swift; sourceTree = "<group>"; };
+		F4A100042FB8000000000004 /* home-recommendations-reference.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "home-recommendations-reference.html"; sourceTree = "<group>"; };
+		F4A100052FB8000000000005 /* home-recommendations-compact.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "home-recommendations-compact.html"; sourceTree = "<group>"; };
+		F4A100062FB8000000000006 /* home-recommendations-unknown.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "home-recommendations-unknown.html"; sourceTree = "<group>"; };
+		F4FADE012FB900000C55FF9 /* HanaHorizontalFadeMetricsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanaHorizontalFadeMetricsTests.swift; sourceTree = "<group>"; };
+		F4A11D012FB900000C55FF9 /* HanaCompleteGridRowsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanaCompleteGridRowsTests.swift; sourceTree = "<group>"; };
+		F4FAFE012FB900000C55FF9 /* HanimeFavoriteRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanimeFavoriteRepositoryTests.swift; sourceTree = "<group>"; };
+		F4CFCF012FC0000000000001 /* HanaHTTPClientCloudflareTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HanaHTTPClientCloudflareTests.swift; sourceTree = "<group>"; };
+		F4CFD0012FC1000000000001 /* SiteWebSessionSheetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteWebSessionSheetTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		F44DB4752FB7571400C55FF9 /* Hana */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Hana;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F44DB4702FB7571400C55FF9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F44DB4932FB760000C55FF9 /* Nuke in Frameworks */,
+				F44DB4942FB760000C55FF9 /* NukeUI in Frameworks */,
+				F44DB4902FB760000C55FF9 /* SwiftSoup in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F44DB4A42FB762000C55FF9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		F44DB46A2FB7571400C55FF9 = {
+			isa = PBXGroup;
+			children = (
+				F44DB4992FB761000C55FF9 /* Config */,
+				F44DB4752FB7571400C55FF9 /* Hana */,
+				F44DB4AC2FB762000C55FF9 /* Tests */,
+				F44DB4742FB7571400C55FF9 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F44DB4742FB7571400C55FF9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F44DB4732FB7571400C55FF9 /* Hana.app */,
+				F44DB4A02FB762000C55FF9 /* HanaTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F44DB4992FB761000C55FF9 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				F44DB4982FB761000C55FF9 /* Version.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		F44DB4AC2FB762000C55FF9 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				F44DB4AD2FB762000C55FF9 /* HanaTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		F44DB4AD2FB762000C55FF9 /* HanaTests */ = {
+			isa = PBXGroup;
+			children = (
+				F44DB4A12FB762000C55FF9 /* AppBuildInfoTests.swift */,
+				F4A11D012FB900000C55FF9 /* HanaCompleteGridRowsTests.swift */,
+				F4FADE012FB900000C55FF9 /* HanaHorizontalFadeMetricsTests.swift */,
+				F44DB4B02FB762000C55FF9 /* HanaBackupServiceTests.swift */,
+				F44DB4B02FB763000C55FF9 /* DownloadResumeStateTests.swift */,
+				F44DB4B52FB7A0000C55FF9 /* HanimeDuplicateVideoParserTests.swift */,
+				F44DB4B12FB7A0000C55FF9 /* HanimeSearchContractTests.swift */,
+				F44DB4B32FB7A0000C55FF9 /* HanimeVideoDeduplicationTests.swift */,
+				F44DB4AF2FB762000C55FF9 /* DownloadDirectoryTests.swift */,
+				F44DB4C02FB780000C55FF9 /* HanimeSeriesParserTests.swift */,
+				F44DB4B02FB770000C55FF9 /* HanaSessionCookieStoreTests.swift */,
+				F44DB4D12FB790000C55FF9 /* HanimeRelatedVideosParserTests.swift */,
+				F4A100012FB8000000000001 /* HanimeHomeParserTests.swift */,
+				F4A100022FB8000000000002 /* HanimeHomeRepositoryTests.swift */,
+				F4FAFE012FB900000C55FF9 /* HanimeFavoriteRepositoryTests.swift */,
+				F4CFCF012FC0000000000001 /* HanaHTTPClientCloudflareTests.swift */,
+				F4CFD0012FC1000000000001 /* SiteWebSessionSheetTests.swift */,
+				F4A100032FB8000000000003 /* Fixtures */,
+			);
+			path = HanaTests;
+			sourceTree = "<group>";
+		};
+		F4A100032FB8000000000003 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				F4A100042FB8000000000004 /* home-recommendations-reference.html */,
+				F4A100052FB8000000000005 /* home-recommendations-compact.html */,
+				F4A100062FB8000000000006 /* home-recommendations-unknown.html */,
+				F44DB4D82FB790000C55FF9 /* related-videos-grid.html */,
+				F44DB4D32FB790000C55FF9 /* related-videos-normal.html */,
+				F44DB4D52FB790000C55FF9 /* related-videos-simplified.html */,
+				F44DB4C12FB780000C55FF9 /* series-playlist-new.html */,
+				F44DB4C22FB780000C55FF9 /* series-playlist-legacy.html */,
+				F44DB4CB2FB780000C55FF9 /* series-playlist-legacy-direct-anchor.html */,
+				F44DB4C32FB780000C55FF9 /* series-playlist-edge-cases.html */,
+				F44DB4C42FB780000C55FF9 /* video-without-series.html */,
+				F44DB4B72FB7A0000C55FF9 /* duplicate-video-lists.html */,
+			);
+			path = Fixtures;
+			sourceTree = "<group>";
+		};
+		F44DB4992FB761000C55FF9 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				F44DB4982FB761000C55FF9 /* Version.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		F44DB4742FB7571400C55FF9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F44DB4732FB7571400C55FF9 /* Hana.app */,
+				F44DB4A02FB762000C55FF9 /* HanaTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F44DB4722FB7571400C55FF9 /* Hana */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F44DB4802FB7571500C55FF9 /* Build configuration list for PBXNativeTarget "Hana" */;
+			buildPhases = (
+				F44DB46F2FB7571400C55FF9 /* Sources */,
+				F44DB4702FB7571400C55FF9 /* Frameworks */,
+				F44DB4712FB7571400C55FF9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F44DB4752FB7571400C55FF9 /* Hana */,
+			);
+			name = Hana;
+			packageProductDependencies = (
+				F44DB4952FB760000C55FF9 /* Nuke */,
+				F44DB4962FB760000C55FF9 /* NukeUI */,
+				F44DB4922FB760000C55FF9 /* SwiftSoup */,
+			);
+			productName = Hana;
+			productReference = F44DB4732FB7571400C55FF9 /* Hana.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F44DB4A22FB762000C55FF9 /* HanaTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F44DB4A62FB762000C55FF9 /* Build configuration list for PBXNativeTarget "HanaTests" */;
+			buildPhases = (
+				F44DB4A32FB762000C55FF9 /* Sources */,
+				F44DB4A42FB762000C55FF9 /* Frameworks */,
+				F44DB4A52FB762000C55FF9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F44DB4AB2FB762000C55FF9 /* PBXTargetDependency */,
+			);
+			name = HanaTests;
+			productName = HanaTests;
+			productReference = F44DB4A02FB762000C55FF9 /* HanaTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F44DB46B2FB7571400C55FF9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					F44DB4722FB7571400C55FF9 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+				};
+			};
+			buildConfigurationList = F44DB46E2FB7571400C55FF9 /* Build configuration list for PBXProject "Hana" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = F44DB46A2FB7571400C55FF9;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F44DB4912FB760000C55FF9 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+				F44DB4972FB760000C55FF9 /* XCRemoteSwiftPackageReference "Nuke" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = F44DB4742FB7571400C55FF9 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F44DB4722FB7571400C55FF9 /* Hana */,
+				F44DB4A22FB762000C55FF9 /* HanaTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F44DB4712FB7571400C55FF9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F44DB4A52FB762000C55FF9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F44DB4B62FB7A0000C55FF9 /* duplicate-video-lists.html in Resources */,
+				F4A1000A2FB800000000000A /* home-recommendations-compact.html in Resources */,
+				F4A100092FB8000000000009 /* home-recommendations-reference.html in Resources */,
+				F4A1000B2FB800000000000B /* home-recommendations-unknown.html in Resources */,
+				F44DB4D72FB790000C55FF9 /* related-videos-grid.html in Resources */,
+				F44DB4D22FB790000C55FF9 /* related-videos-normal.html in Resources */,
+				F44DB4D42FB790000C55FF9 /* related-videos-simplified.html in Resources */,
+				F44DB4C62FB780000C55FF9 /* series-playlist-new.html in Resources */,
+				F44DB4C72FB780000C55FF9 /* series-playlist-legacy.html in Resources */,
+				F44DB4CC2FB780000C55FF9 /* series-playlist-legacy-direct-anchor.html in Resources */,
+				F44DB4C82FB780000C55FF9 /* series-playlist-edge-cases.html in Resources */,
+				F44DB4C92FB780000C55FF9 /* video-without-series.html in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F44DB46F2FB7571400C55FF9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F44DB4A32FB762000C55FF9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F44DB4A92FB762000C55FF9 /* AppBuildInfoTests.swift in Sources */,
+				F4A11D022FB900000C55FF9 /* HanaCompleteGridRowsTests.swift in Sources */,
+				F4FADE022FB900000C55FF9 /* HanaHorizontalFadeMetricsTests.swift in Sources */,
+				F44DB4B12FB762000C55FF9 /* HanaBackupServiceTests.swift in Sources */,
+				F44DB4B12FB763000C55FF9 /* DownloadResumeStateTests.swift in Sources */,
+				F44DB4B42FB7A0000C55FF9 /* HanimeDuplicateVideoParserTests.swift in Sources */,
+				F44DB4B02FB7A0000C55FF9 /* HanimeSearchContractTests.swift in Sources */,
+				F44DB4B22FB7A0000C55FF9 /* HanimeVideoDeduplicationTests.swift in Sources */,
+				F44DB4AE2FB762000C55FF9 /* DownloadDirectoryTests.swift in Sources */,
+				F44DB4C52FB780000C55FF9 /* HanimeSeriesParserTests.swift in Sources */,
+				F44DB4B12FB770000C55FF9 /* HanaSessionCookieStoreTests.swift in Sources */,
+				F44DB4D02FB790000C55FF9 /* HanimeRelatedVideosParserTests.swift in Sources */,
+				F4A100072FB8000000000007 /* HanimeHomeParserTests.swift in Sources */,
+				F4A100082FB8000000000008 /* HanimeHomeRepositoryTests.swift in Sources */,
+				F4FAFE022FB900000C55FF9 /* HanimeFavoriteRepositoryTests.swift in Sources */,
+				F4CFCF022FC0000000000002 /* HanaHTTPClientCloudflareTests.swift in Sources */,
+				F4CFD0022FC1000000000002 /* SiteWebSessionSheetTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F44DB4AB2FB762000C55FF9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F44DB4722FB7571400C55FF9 /* Hana */;
+			targetProxy = F44DB4AA2FB762000C55FF9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		F44DB47E2FB7571500C55FF9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		F44DB47F2FB7571500C55FF9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		F44DB4812FB7571500C55FF9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F44DB4982FB761000C55FF9 /* Version.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Hana/Hana.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				ENABLE_PREVIEWS = YES;
+				"ENABLE_USER_SELECTED_FILES[sdk=macosx*]" = readwrite;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HanaInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Hana;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = sh.celia.hana;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		F44DB4822FB7571500C55FF9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F44DB4982FB761000C55FF9 /* Version.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Hana/Hana.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				ENABLE_PREVIEWS = YES;
+				"ENABLE_USER_SELECTED_FILES[sdk=macosx*]" = readwrite;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HanaInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Hana;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = sh.celia.hana;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		F44DB4A72FB762000C55FF9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = sh.celia.hana.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Hana.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Hana";
+				XROS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		F44DB4A82FB762000C55FF9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = sh.celia.hana.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Hana.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Hana";
+				XROS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F44DB46E2FB7571400C55FF9 /* Build configuration list for PBXProject "Hana" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F44DB47E2FB7571500C55FF9 /* Debug */,
+				F44DB47F2FB7571500C55FF9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F44DB4802FB7571500C55FF9 /* Build configuration list for PBXNativeTarget "Hana" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F44DB4812FB7571500C55FF9 /* Debug */,
+				F44DB4822FB7571500C55FF9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F44DB4A62FB762000C55FF9 /* Build configuration list for PBXNativeTarget "HanaTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F44DB4A72FB762000C55FF9 /* Debug */,
+				F44DB4A82FB762000C55FF9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F44DB4912FB760000C55FF9 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.13.5;
+			};
+		};
+		F44DB4972FB760000C55FF9 /* XCRemoteSwiftPackageReference "Nuke" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Nuke.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 13.0.6;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F44DB4922FB760000C55FF9 /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F44DB4912FB760000C55FF9 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoup;
+		};
+		F44DB4952FB760000C55FF9 /* Nuke */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F44DB4972FB760000C55FF9 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = Nuke;
+		};
+		F44DB4962FB760000C55FF9 /* NukeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F44DB4972FB760000C55FF9 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeUI;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = F44DB46B2FB7571400C55FF9 /* Project object */;
+}

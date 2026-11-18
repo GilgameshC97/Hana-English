@@ -1,0 +1,74 @@
+[
+  {
+    "lang": {
+      "zh-rCN": "New Releases",
+      "en": "New Releases",
+      "zh-rTW": "New Releases"
+    },
+    "search_key": "最新上市"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Latest Uploads",
+      "en": "Latest Uploads",
+      "zh-rTW": "Latest Uploads"
+    },
+    "search_key": "最新上傳"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Daily Ranking",
+      "en": "Daily Ranking",
+      "zh-rTW": "Daily Ranking"
+    },
+    "search_key": "本日排行"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Weekly Ranking",
+      "en": "Weekly Ranking",
+      "zh-rTW": "Weekly Ranking"
+    },
+    "search_key": "本週排行"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Monthly Ranking",
+      "en": "Monthly Ranking",
+      "zh-rTW": "Monthly Ranking"
+    },
+    "search_key": "本月排行"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Most Viewed",
+      "en": "Most Viewed",
+      "zh-rTW": "Most Viewed"
+    },
+    "search_key": "觀看次數"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Highest Rated",
+      "en": "Highest Rated",
+      "zh-rTW": "Highest Rated"
+    },
+    "search_key": "讚好比例"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Trending",
+      "en": "Trending",
+      "zh-rTW": "Trending"
+    },
+    "search_key": "他們在看"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Longest Duration",
+      "en": "Longest Duration",
+      "zh-rTW": "Longest Duration"
+    },
+    "search_key": "時長最長"
+  }
+]

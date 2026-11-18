@@ -1,0 +1,343 @@
+import SwiftUI
+import WebKit
+
+struct SiteWebSessionSheet: View {
+    let flow: SiteWebFlow
+    let onComplete: ([HTTPCookie]) -> Void
+    let onCancel: () -> Void
+
+    @State private var cookies: [HTTPCookie] = []
+
+    var body: some View {
+        content
+            .interactiveDismissDisabled(flow.kind == .cloudflare)
+#if os(macOS)
+            .frame(minWidth: 760, idealWidth: 900, minHeight: 560, idealHeight: 640)
+#endif
+    }
+
+    private var content: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                if flow.kind == .cloudflare {
+                    Text("Please complete Cloudflare verification and wait for page to close.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                        .padding(.vertical, 10)
+                        .background(.bar)
+                }
+
+                SiteWebView(
+                    flow: flow,
+                    onCookiesChanged: { cookies in
+                        self.cookies = cookies
+                    },
+                    onFlowCompleted: { cookies in
+                        onComplete(cookies)
+                    }
+                )
+            }
+            .navigationTitle(flow.title)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    HanaToolbarIconButton(title: "Cancel", systemImage: "xmark", action: onCancel)
+                }
+                if flow.kind == .login {
+                    ToolbarItem(placement: .confirmationAction) {
+                        HanaToolbarIconButton(title: "Done", systemImage: "checkmark") {
+                            onComplete(cookies)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct SiteCloudflareFlowPresenter: ViewModifier {
+    @Environment(HanaServices.self) private var services
+
+    func body(content: Content) -> some View {
+        let flow = Binding<SiteWebFlow?>(
+            get: {
+                guard services.siteSession.activeFlow?.kind == .cloudflare else { return nil }
+                return services.siteSession.activeFlow
+            },
+            set: { _ in }
+        )
+
+        content.sheet(item: flow) { activeFlow in
+            SiteWebSessionSheet(
+                flow: activeFlow,
+                onComplete: { cookies in
+                    services.siteSession.complete(flowID: activeFlow.id, with: cookies)
+                },
+                onCancel: {
+                    services.siteSession.cancel(flowID: activeFlow.id)
+                }
+            )
+        }
+    }
+}
+
+extension View {
+    func siteCloudflareFlowPresenter() -> some View {
+        modifier(SiteCloudflareFlowPresenter())
+    }
+}
+
+#if os(iOS) || os(visionOS)
+struct SiteWebView: UIViewRepresentable {
+    let flow: SiteWebFlow
+    let onCookiesChanged: ([HTTPCookie]) -> Void
+    let onFlowCompleted: ([HTTPCookie]) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(
+            flow: flow,
+            onCookiesChanged: onCookiesChanged,
+            onFlowCompleted: onFlowCompleted
+        )
+    }
+
+    func makeUIView(context: Context) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .default()
+        configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.customUserAgent = HanaHTTPClient.userAgent
+        webView.navigationDelegate = context.coordinator
+        webView.load(URLRequest(url: flow.url))
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {}
+
+    static func dismantleUIView(_ webView: WKWebView, coordinator: Coordinator) {
+        coordinator.cancelCloudflareCompletionChecks()
+        webView.navigationDelegate = nil
+        webView.stopLoading()
+    }
+}
+#elseif os(macOS)
+struct SiteWebView: NSViewRepresentable {
+    let flow: SiteWebFlow
+    let onCookiesChanged: ([HTTPCookie]) -> Void
+    let onFlowCompleted: ([HTTPCookie]) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(
+            flow: flow,
+            onCookiesChanged: onCookiesChanged,
+            onFlowCompleted: onFlowCompleted
+        )
+    }
+
+    func makeNSView(context: Context) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .default()
+        configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.customUserAgent = HanaHTTPClient.userAgent
+        webView.navigationDelegate = context.coordinator
+        webView.load(URLRequest(url: flow.url))
+        return webView
+    }
+
+    func updateNSView(_ webView: WKWebView, context: Context) {}
+
+    static func dismantleNSView(_ webView: WKWebView, coordinator: Coordinator) {
+        coordinator.cancelCloudflareCompletionChecks()
+        webView.navigationDelegate = nil
+        webView.stopLoading()
+    }
+}
+#endif
+
+struct CloudflareCompletionPollingState {
+    private(set) var isScheduled = false
+    private(set) var isFinished = false
+
+    mutating func schedule() -> Bool {
+        guard !isFinished, !isScheduled else { return false }
+        isScheduled = true
+        return true
+    }
+
+    mutating func beginCheck() {
+        guard !isFinished else { return }
+        isScheduled = false
+    }
+
+    mutating func finish() {
+        isScheduled = false
+        isFinished = true
+    }
+}
+
+extension SiteWebView {
+    final class Coordinator: NSObject, WKNavigationDelegate {
+        let flow: SiteWebFlow
+        let onCookiesChanged: ([HTTPCookie]) -> Void
+        let onFlowCompleted: ([HTTPCookie]) -> Void
+        private var hasCompletedLogin = false
+        private var cloudflarePollingState = CloudflareCompletionPollingState()
+        private var cloudflareCheckWorkItem: DispatchWorkItem?
+
+        init(
+            flow: SiteWebFlow,
+            onCookiesChanged: @escaping ([HTTPCookie]) -> Void,
+            onFlowCompleted: @escaping ([HTTPCookie]) -> Void
+        ) {
+            self.flow = flow
+            self.onCookiesChanged = onCookiesChanged
+            self.onFlowCompleted = onFlowCompleted
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            syncCookies(from: webView)
+            scheduleCloudflareCompletionCheck(from: webView)
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationAction: WKNavigationAction,
+            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+        ) {
+            if shouldCompleteLogin(for: navigationAction) {
+                completeLogin(from: webView)
+                decisionHandler(.cancel)
+                return
+            }
+            decisionHandler(.allow)
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationResponse: WKNavigationResponse,
+            decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+        ) {
+            if shouldCompleteLogin(for: navigationResponse) {
+                completeLogin(from: webView)
+            }
+            decisionHandler(.allow)
+        }
+
+        private func shouldCompleteLogin(for navigationAction: WKNavigationAction) -> Bool {
+            guard flow.kind == .login,
+                  !hasCompletedLogin,
+                  navigationAction.targetFrame?.isMainFrame == true,
+                  let url = navigationAction.request.url,
+                  isSameSite(url),
+                  !isLoginURL(url) else {
+                return false
+            }
+            return true
+        }
+
+        private func shouldCompleteLogin(for navigationResponse: WKNavigationResponse) -> Bool {
+            guard flow.kind == .login,
+                  !hasCompletedLogin,
+                  navigationResponse.isForMainFrame,
+                  let response = navigationResponse.response as? HTTPURLResponse,
+                  let url = response.url,
+                  isSameSite(url) else {
+                return false
+            }
+            return response.statusCode == 404 && isLoginURL(url)
+        }
+
+        private func completeLogin(from webView: WKWebView) {
+            hasCompletedLogin = true
+            webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { [onFlowCompleted] cookies in
+                onFlowCompleted(cookies)
+            }
+        }
+
+        private func syncCookies(from webView: WKWebView) {
+            webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { [onCookiesChanged] cookies in
+                onCookiesChanged(cookies)
+            }
+        }
+
+        func cancelCloudflareCompletionChecks() {
+            cloudflareCheckWorkItem?.cancel()
+            cloudflareCheckWorkItem = nil
+            cloudflarePollingState.finish()
+        }
+
+        private func scheduleCloudflareCompletionCheck(from webView: WKWebView) {
+            guard flow.kind == .cloudflare,
+                  cloudflarePollingState.schedule() else {
+                return
+            }
+
+            let workItem = DispatchWorkItem { [weak self, weak webView] in
+                guard let self, let webView else { return }
+                self.cloudflareCheckWorkItem = nil
+                self.cloudflarePollingState.beginCheck()
+                self.completeCloudflareIfReady(from: webView)
+            }
+            cloudflareCheckWorkItem = workItem
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: workItem)
+        }
+
+        private func completeCloudflareIfReady(from webView: WKWebView) {
+            webView.evaluateJavaScript("document.head ? document.head.innerHTML : ''") { [weak self, weak webView] result, _ in
+                guard let self,
+                      let webView,
+                      !self.cloudflarePollingState.isFinished else {
+                    return
+                }
+                let html = result as? String ?? ""
+                guard !self.containsCloudflareChallengeMarker(html) else {
+                    self.scheduleCloudflareCompletionCheck(from: webView)
+                    return
+                }
+
+                webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { [weak self, weak webView] cookies in
+                    guard let self,
+                          let webView,
+                          !self.cloudflarePollingState.isFinished else {
+                        return
+                    }
+                    guard SiteWebCookieScope.cloudflareClearance(
+                        in: cookies,
+                        for: self.flow.url
+                    ) != nil else {
+                        self.scheduleCloudflareCompletionCheck(from: webView)
+                        return
+                    }
+
+                    self.cloudflarePollingState.finish()
+                    self.onCookiesChanged(cookies)
+                    self.onFlowCompleted(cookies)
+                }
+            }
+        }
+
+        private func containsCloudflareChallengeMarker(_ html: String) -> Bool {
+            [
+                "#challenge-form",
+                "challenge-form",
+                "#challenge-success-text",
+                "challenge-success-text",
+                "#challenge-error-text",
+                "challenge-error-text"
+            ].contains { html.localizedCaseInsensitiveContains($0) }
+        }
+
+        private func isLoginURL(_ url: URL) -> Bool {
+            url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")) == "login"
+        }
+
+        private func isSameSite(_ url: URL) -> Bool {
+            guard let flowHost = flow.url.host(), let urlHost = url.host() else {
+                return false
+            }
+            return flowHost == urlHost
+        }
+    }
+}

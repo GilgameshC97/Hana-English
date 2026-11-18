@@ -1,0 +1,102 @@
+import SwiftUI
+#if canImport(UIKit)
+import UIKit
+typealias SettingsPlatformImage = UIImage
+#elseif canImport(AppKit)
+import AppKit
+typealias SettingsPlatformImage = NSImage
+#endif
+
+struct SettingsAppFooter: View {
+    static var displayVersionText: String {
+        SettingsAppInfo.displayVersionText
+    }
+
+    private let appInfo = SettingsAppInfo.current
+
+    var body: some View {
+        VStack(spacing: 8) {
+            if let icon = appInfo.icon {
+                settingsAppIconImage(icon)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 64, height: 64)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(.secondary.opacity(0.18), lineWidth: 1)
+                    }
+            }
+
+            VStack(spacing: 2) {
+                Text(appInfo.name)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Text(appInfo.versionText)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, 18)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private func settingsAppIconImage(_ icon: SettingsPlatformImage) -> Image {
+#if canImport(UIKit)
+    Image(uiImage: icon)
+#elseif canImport(AppKit)
+    Image(nsImage: icon)
+#endif
+}
+
+private struct SettingsAppInfo {
+    let name: String
+    let versionText: String
+    let icon: SettingsPlatformImage?
+
+    static var current: SettingsAppInfo {
+        let bundle = Bundle.main
+        let name = bundle.localizedStringValue(for: "CFBundleDisplayName")
+            ?? bundle.localizedStringValue(for: "CFBundleName")
+            ?? ProcessInfo.processInfo.processName
+        let version = bundle.localizedStringValue(for: "CFBundleShortVersionString") ?? ""
+        let displayVersion = AppBuildInfo.displayVersion(baseVersion: version)
+
+        return SettingsAppInfo(
+            name: name,
+            versionText: displayVersion.isEmpty ? "Unknown Version" : displayVersion,
+            icon: primaryIcon(in: bundle)
+        )
+    }
+
+    static var displayVersionText: String {
+        current.versionText == "Unknown Version" ? "" : current.versionText
+    }
+
+    private static func primaryIcon(in bundle: Bundle) -> SettingsPlatformImage? {
+#if canImport(UIKit)
+        guard let icons = bundle.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
+              let primaryIcon = icons["CFBundlePrimaryIcon"] as? [String: Any],
+              let iconFiles = primaryIcon["CFBundleIconFiles"] as? [String],
+              let iconName = iconFiles.last else {
+            return nil
+        }
+        return UIImage(named: iconName)
+#elseif canImport(AppKit)
+        if let iconName = bundle.object(forInfoDictionaryKey: "CFBundleIconFile") as? String {
+            return NSImage(named: iconName)
+        }
+        return nil
+#else
+        return nil
+#endif
+    }
+}
+
+private extension Bundle {
+    func localizedStringValue(for key: String) -> String? {
+        object(forInfoDictionaryKey: key) as? String
+    }
+}

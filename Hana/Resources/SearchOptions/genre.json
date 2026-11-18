@@ -1,0 +1,82 @@
+[
+  {
+    "lang": {
+      "zh-rCN": "All",
+      "en": "All",
+      "zh-rTW": "All"
+    },
+    "search_key": "全部"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Hentai",
+      "en": "Hentai",
+      "zh-rTW": "Hentai"
+    },
+    "search_key": "裏番"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Short Anime",
+      "en": "Short Anime",
+      "zh-rTW": "Short Anime"
+    },
+    "search_key": "泡麵番"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Motion Anime",
+      "en": "Motion Anime",
+      "zh-rTW": "Motion Anime"
+    },
+    "search_key": "Motion Anime"
+  },
+  {
+    "lang": {
+      "zh-rCN": "3D Animation",
+      "en": "3D Animation",
+      "zh-rTW": "3D Animation"
+    },
+    "search_key": "3DCG"
+  },
+  {
+    "lang": {
+      "zh-rCN": "2.5D",
+      "en": "2.5D",
+      "zh-rTW": "2.5D"
+    },
+    "search_key": "2.5D"
+  },
+  {
+    "lang": {
+      "zh-rCN": "2D Animation",
+      "en": "2D Animation",
+      "zh-rTW": "2D Animation"
+    },
+    "search_key": "2D動畫"
+  },
+  {
+    "lang": {
+      "zh-rCN": "AI-Generated",
+      "en": "AI-Generated",
+      "zh-rTW": "AI-Generated"
+    },
+    "search_key": "AI生成"
+  },
+  {
+    "lang": {
+      "zh-rCN": "MMD",
+      "en": "MMD",
+      "zh-rTW": "MMD"
+    },
+    "search_key": "MMD"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Cosplay",
+      "en": "Cosplay",
+      "zh-rTW": "Cosplay"
+    },
+    "search_key": "Cosplay"
+  }
+]

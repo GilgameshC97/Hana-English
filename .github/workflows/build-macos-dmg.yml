@@ -1,0 +1,147 @@
+name: Build macOS DMG
+
+'on':
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-macos:
+    name: Build unsigned DMG
+    runs-on: macos-26
+
+    env:
+      SCHEME: Hana
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set Build Metadata
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          RELEASE_VERSION=""
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            BUILD_NUMBER="$(git rev-list --count origin/main)"
+            BUILD_CHANNEL="pr"
+            BUILD_LABEL="PR #${{ github.event.pull_request.number }}"
+          elif [ "$GITHUB_REF_NAME" = "main" ]; then
+            BUILD_NUMBER="$(git rev-list --count HEAD)"
+            BUILD_CHANNEL="main"
+            BUILD_LABEL="Build $BUILD_NUMBER"
+          elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            if [[ ! "$GITHUB_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+              echo "::error::Release tag must use vX.Y.Z format: $GITHUB_REF_NAME"
+              exit 1
+            fi
+            RELEASE_VERSION="${BASH_REMATCH[1]}"
+            BUILD_NUMBER="$(git rev-list --count HEAD)"
+            BUILD_CHANNEL="tag"
+            BUILD_LABEL="Build $BUILD_NUMBER"
+          else
+            BUILD_NUMBER="$(git rev-list --count origin/main)"
+            BUILD_CHANNEL="branch"
+            BUILD_LABEL="$GITHUB_REF_NAME"
+          fi
+
+          {
+            echo "BUILD_NUMBER=$BUILD_NUMBER"
+            echo "BUILD_CHANNEL=$BUILD_CHANNEL"
+            echo "BUILD_LABEL=$BUILD_LABEL"
+            echo "RELEASE_VERSION=$RELEASE_VERSION"
+          } >> "$GITHUB_ENV"
+
+      - name: Select Xcode
+        run: |
+          if [ -d /Applications/Xcode_26.5.app/Contents/Developer ]; then
+            echo "DEVELOPER_DIR=/Applications/Xcode_26.5.app/Contents/Developer" >> "$GITHUB_ENV"
+          fi
+
+      - name: Show build environment
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks
+          echo "BUILD_NUMBER=$BUILD_NUMBER"
+          echo "BUILD_CHANNEL=$BUILD_CHANNEL"
+          echo "BUILD_LABEL=$BUILD_LABEL"
+          echo "RELEASE_VERSION=$RELEASE_VERSION"
+
+      - name: Build unsigned DMG
+        run: |
+          set -euo pipefail
+
+          derived_data_path="$PWD/build/DerivedData-macOS"
+          products_path="$derived_data_path/Build/Products"
+          staging_dir="$PWD/build/dmg-staging"
+          artifact_dir="$PWD/artifacts"
+
+          rm -rf "$derived_data_path" "$staging_dir" "$artifact_dir"
+          mkdir -p "$staging_dir" "$artifact_dir"
+
+          build_settings=(
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+            HANA_BUILD_CHANNEL="$BUILD_CHANNEL"
+            HANA_BUILD_LABEL="$BUILD_LABEL"
+            CODE_SIGN_IDENTITY=""
+            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGNING_ALLOWED=NO
+          )
+          if [ -n "$RELEASE_VERSION" ]; then
+            build_settings+=(MARKETING_VERSION="$RELEASE_VERSION")
+          fi
+
+          xcodebuild clean build \
+            -project Hana.xcodeproj \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination "generic/platform=macOS" \
+            -derivedDataPath "$derived_data_path" \
+            "${build_settings[@]}"
+
+          app_path="$(find "$products_path" -name "${SCHEME}.app" -type d | head -n 1)"
+
+          if [ -z "$app_path" ]; then
+            echo "No ${SCHEME}.app found under $products_path"
+            exit 1
+          fi
+
+          marketing_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")"
+          if [ -n "$RELEASE_VERSION" ] && [ "$marketing_version" != "$RELEASE_VERSION" ]; then
+            echo "::error::Built version $marketing_version does not match tag version $RELEASE_VERSION"
+            exit 1
+          fi
+          dmg_path="$artifact_dir/Hana-macOS-${marketing_version}-${BUILD_NUMBER}-unsigned.dmg"
+
+          ditto "$app_path" "$staging_dir/${SCHEME}.app"
+          ln -s /Applications "$staging_dir/Applications"
+
+          hdiutil create \
+            -volname "$SCHEME" \
+            -srcfolder "$staging_dir" \
+            -ov \
+            -format UDZO \
+            "$dmg_path"
+
+          sync
+          sleep 5
+          hdiutil verify "$dmg_path"
+
+      - name: Upload unsigned DMG
+        uses: actions/upload-artifact@v7
+        with:
+          path: artifacts/*.dmg
+          if-no-files-found: error
+          archive: false

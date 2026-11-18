@@ -1,0 +1,74 @@
+[
+  {
+    "lang": {
+      "zh-rCN": "All",
+      "en": "All",
+      "zh-rTW": "All"
+    },
+    "search_key": null
+  },
+  {
+    "lang": {
+      "zh-rCN": "Over 1 min",
+      "en": "Over 1 min",
+      "zh-rTW": "Over 1 min"
+    },
+    "search_key": "1 分鐘 +"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Over 5 mins",
+      "en": "Over 5 mins",
+      "zh-rTW": "Over 5 mins"
+    },
+    "search_key": "5 分鐘 +"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Over 10 mins",
+      "en": "Over 10 mins",
+      "zh-rTW": "Over 10 mins"
+    },
+    "search_key": "10 分鐘 +"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Over 20 mins",
+      "en": "Over 20 mins",
+      "zh-rTW": "Over 20 mins"
+    },
+    "search_key": "20 分鐘 +"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Over 30 mins",
+      "en": "Over 30 mins",
+      "zh-rTW": "Over 30 mins"
+    },
+    "search_key": "30 分鐘 +"
+  },
+  {
+    "lang": {
+      "zh-rCN": "Over 60 mins",
+      "en": "Over 60 mins",
+      "zh-rTW": "Over 60 mins"
+    },
+    "search_key": "60 分鐘 +"
+  },
+  {
+    "lang": {
+      "zh-rCN": "0-10 mins",
+      "en": "0-10 mins",
+      "zh-rTW": "0-10 mins"
+    },
+    "search_key": "0 - 10 分鐘"
+  },
+  {
+    "lang": {
+      "zh-rCN": "0-20 mins",
+      "en": "0-20 mins",
+      "zh-rTW": "0-20 mins"
+    },
+    "search_key": "0 - 20 分鐘"
+  }
+]
