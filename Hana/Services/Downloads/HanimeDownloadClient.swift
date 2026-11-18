@@ -695,8 +695,7 @@ nonisolated struct HanimeDownloadTaskStateStore {
         task.createdFromResumeData = nil
         task.localFileURLString = nil
         task.errorDescription = resumeData == nil
-            ? "\(errorDescription)
-Restarting will start over."
+            ? "\(errorDescription)\nRestarting will start over."
             : errorDescription
         task.updatedAt = .now
         task.completedAt = nil

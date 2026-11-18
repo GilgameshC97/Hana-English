@@ -208,14 +208,10 @@ struct DisciplineModeSetupSheet: View {
         switch draftMode {
         case .weekly:
             let weekdays = DisciplineModeFormatting.weekdayListText(for: weeklyAllowedWeekdayNumbers)
-            return "By Weekday
-Allowed: \(weekdays).
-Blocked on other days."
+            return "By Weekday\nAllowed: \(weekdays).\nBlocked on other days."
         case .recurring:
             let days = recurringAllowedDayNumbers.sorted().map { "Day \($0)" }.joined(separator: "、")
-            return "\(cycleLengthDays)-day cycle
-Allowed: \(days).
-Blocked on other days."
+            return "\(cycleLengthDays)-day cycle\nAllowed: \(days).\nBlocked on other days."
         case .single:
             let until = Date.now.addingTimeInterval(singleDuration.totalSeconds)
             return "Locked until \(DisciplineModeFormatting.chineseDateTimeText(for: until))."
