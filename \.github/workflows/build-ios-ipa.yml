@@ -1,0 +1,144 @@
+name: Build iOS IPA
+
+'on':
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    name: Build unsigned IPA
+    runs-on: macos-15
+
+    env:
+      SCHEME: Hana
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set Build Metadata
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main:refs/remotes/origin/main 2>/dev/null || true
+          RELEASE_VERSION=""
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            BUILD_NUMBER="$(git rev-list --count origin/main 2>/dev/null || echo 46)"
+            BUILD_CHANNEL="pr"
+            BUILD_LABEL="PR #${{ github.event.pull_request.number }}"
+          elif [ "$GITHUB_REF_NAME" = "main" ]; then
+            BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 46)"
+            BUILD_CHANNEL="main"
+            BUILD_LABEL="Build $BUILD_NUMBER"
+          elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            if [[ ! "$GITHUB_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+              echo "::error::Release tag must use vX.Y.Z format: $GITHUB_REF_NAME"
+              exit 1
+            fi
+            RELEASE_VERSION="${BASH_REMATCH[1]}"
+            BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 46)"
+            BUILD_CHANNEL="tag"
+            BUILD_LABEL="Build $BUILD_NUMBER"
+          else
+            BUILD_NUMBER="$(git rev-list --count origin/main 2>/dev/null || echo 46)"
+            BUILD_CHANNEL="branch"
+            BUILD_LABEL="$GITHUB_REF_NAME"
+          fi
+
+          {
+            echo "BUILD_NUMBER=$BUILD_NUMBER"
+            echo "BUILD_CHANNEL=$BUILD_CHANNEL"
+            echo "BUILD_LABEL=$BUILD_LABEL"
+            echo "RELEASE_VERSION=$RELEASE_VERSION"
+          } >> "$GITHUB_ENV"
+
+      - name: Select Xcode
+        run: |
+          if [ -d /Applications/Xcode_26.5.app/Contents/Developer ]; then
+            echo "DEVELOPER_DIR=/Applications/Xcode_26.5.app/Contents/Developer" >> "$GITHUB_ENV"
+          fi
+
+      - name: Show build environment
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks
+          echo "BUILD_NUMBER=$BUILD_NUMBER"
+          echo "BUILD_CHANNEL=$BUILD_CHANNEL"
+          echo "BUILD_LABEL=$BUILD_LABEL"
+          echo "RELEASE_VERSION=$RELEASE_VERSION"
+
+      - name: Build unsigned IPA
+        run: |
+          set -euo pipefail
+
+          build_dir="$PWD/build"
+          archive_path="$build_dir/Unsigned.xcarchive"
+          payload_path="$build_dir/Payload"
+          artifact_dir="$PWD/artifacts"
+
+          rm -rf "$archive_path" "$payload_path" "$artifact_dir"
+          mkdir -p "$payload_path" "$artifact_dir"
+
+          build_settings=(
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+            HANA_BUILD_CHANNEL="$BUILD_CHANNEL"
+            HANA_BUILD_LABEL="$BUILD_LABEL"
+            CODE_SIGN_IDENTITY=""
+            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGNING_ALLOWED=NO
+          )
+          if [ -n "$RELEASE_VERSION" ]; then
+            build_settings+=(MARKETING_VERSION="$RELEASE_VERSION")
+          fi
+
+          xcodebuild clean archive \
+            -project Hana.xcodeproj \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "$archive_path" \
+            "${build_settings[@]}"
+
+          app_path="$(find "$archive_path/Products/Applications" -maxdepth 1 -name "*.app" | head -n 1)"
+
+          if [ -z "$app_path" ]; then
+            echo "No .app found under $archive_path/Products/Applications"
+            exit 1
+          fi
+
+          marketing_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Info.plist")"
+          if [ -n "$RELEASE_VERSION" ] && [ "$marketing_version" != "$RELEASE_VERSION" ]; then
+            echo "::error::Built version $marketing_version does not match tag version $RELEASE_VERSION"
+            exit 1
+          fi
+          ipa_name="Hana-iOS-${marketing_version}-${BUILD_NUMBER}-unsigned.ipa"
+          zip_name="Hana-iOS-${marketing_version}-${BUILD_NUMBER}-unsigned.zip"
+          ipa_path="$artifact_dir/$ipa_name"
+          zip_path="$artifact_dir/$zip_name"
+
+          cp -R "$app_path" "$payload_path/"
+
+          cd "$build_dir"
+          zip -qry "$ipa_path" Payload
+
+          cd "$artifact_dir"
+          zip -qry "$zip_path" "$ipa_name"
+
+      - name: Upload unsigned IPA ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          path: artifacts/*.zip
+          if-no-files-found: error
+          archive: false
