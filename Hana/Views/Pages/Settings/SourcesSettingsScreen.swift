@@ -162,7 +162,11 @@ private struct HentaiAtHomeSettingsView: View {
         var request = URLRequest(url: url); request.timeoutInterval = 10
         do {
             let (_, response) = try await URLSession.shared.data(for: request)
-            status = (response as? HTTPURLResponse)?.statusCode.map { (200..<500).contains($0) ? "Connected" : "Disconnected (HTTP \($0))" } ?? "Disconnected"
+            if let statusCode = (response as? HTTPURLResponse)?.statusCode {
+                status = (200..<500).contains(statusCode) ? "Connected" : "Disconnected (HTTP \(statusCode))"
+            } else {
+                status = "Disconnected"
+            }
             UserDefaults.standard.set(Date(), forKey: "hana.hh.lastCheck")
         } catch { status = "Disconnected: \(error.localizedDescription)" }
     }
