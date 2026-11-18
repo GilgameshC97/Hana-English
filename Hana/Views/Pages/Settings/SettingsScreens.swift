@@ -1392,7 +1392,7 @@ private struct SiteLatencyResult: Identifiable, Hashable {
     let isReachable: Bool
 
     var summary: String {
-        "\(milliseconds) ms · \(status)"
+        "\(milliseconds) ms ? \(status)"
     }
 }
 

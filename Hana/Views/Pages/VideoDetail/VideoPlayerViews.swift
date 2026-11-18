@@ -9,7 +9,6 @@ struct VideoPlayerPanel: View {
     @AppStorage(HanaSettingsKey.allowResumePlayback) private var allowResumePlayback = true
     @AppStorage(HanaSettingsKey.pictureInPictureEnabled) private var pictureInPictureEnabled = true
     @AppStorage(HanaSettingsKey.loopPlaybackEnabled) private var loopPlaybackEnabled = false
-    @AppStorage(HanaSettingsKey.privateMode) private var privateMode = false
     @AppStorage(HanaSettingsKey.playerLongPressRate) private var playerLongPressRate = HanaPlaybackSpeedCatalog.defaultLongPressRate
     @AppStorage(HanaSettingsKey.playbackSpeed) private var playbackSpeed = 1.0
     @AppStorage(HanaSettingsKey.sleepTimerMinutes) private var sleepTimerMinutes = 0
@@ -342,7 +341,6 @@ struct VideoPlayerPanel: View {
     }
 
     private func savePlaybackProgress() {
-        guard !privateMode else { return }
         guard let player,
               let duration = player.currentItem?.duration.seconds,
               duration.isFinite,
@@ -382,7 +380,6 @@ struct VideoPlayerPanel: View {
     }
 
     private func savedProgress() -> TimeInterval {
-        guard !privateMode else { return 0 }
         guard allowResumePlayback else { return 0 }
         return watchHistoryRecord()?.progress ?? 0
     }
