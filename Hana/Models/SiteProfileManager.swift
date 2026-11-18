@@ -110,6 +110,7 @@ final class HanaSiteProfileManager {
     }
 
     func delete(_ profile: SiteProfile) {
+        if profile.id.uuidString == "00000000-0000-0000-0000-000000000001" { return }
         profiles.removeAll(where: { $0.id == profile.id })
         clearSecrets(for: profile)
         if activeProfileID == profile.id {
@@ -154,6 +155,19 @@ final class HanaSiteProfileManager {
         let parts = value.components(separatedBy: "\u{0}")
         guard parts.count == 2 else { return nil }
         return (String(parts[0]), String(parts[1]))
+    }
+
+    func saveToken(profileID: UUID, token: String) {
+        HanaKeychain.saveData(Data(token.utf8), account: tokenAccount(profileID))
+    }
+
+    func readToken(profileID: UUID) -> String? {
+        guard let data = HanaKeychain.readData(account: tokenAccount(profileID)) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    func clearAccountCredential(profileID: UUID) {
+        HanaKeychain.delete(account: credentialAccount(profileID))
     }
 
     func clearSecrets(for profile: SiteProfile) {

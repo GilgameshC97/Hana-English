@@ -20,6 +20,7 @@ struct ProfileScreen: View {
     @State private var accountSummaryState: ProfileAccountSummaryState = .idle
     @State private var editingProfile: SiteProfile?
     @State private var isProfileEditorPresented = false
+    @State private var profilePendingDeletion: SiteProfile?
 
     var body: some View {
         content
@@ -29,6 +30,17 @@ struct ProfileScreen: View {
             }
             .sheet(isPresented: $isProfileEditorPresented) {
                 SiteProfileEditorSheet(profile: $editingProfile, manager: siteProfiles)
+            }
+            .confirmationDialog("Delete Site Profile", isPresented: Binding(get: { profilePendingDeletion != nil }, set: { if !$0 { profilePendingDeletion = nil } }), titleVisibility: .visible) {
+                Button("Delete \(profilePendingDeletion?.displayName ?? "Profile")", role: .destructive) {
+                    if let profilePendingDeletion {
+                        siteProfiles.delete(profilePendingDeletion)
+                        profilePendingDeletion = nil
+                    }
+                }
+                Button("Cancel", role: .cancel) { profilePendingDeletion = nil }
+            } message: {
+                Text("This removes only this profile's credentials, cookies, and local sync state.")
             }
     }
 
@@ -52,6 +64,9 @@ struct ProfileScreen: View {
                             VStack(alignment: .leading) {
                                 Text(profile.displayName).font(.headline)
                                 Text(profile.baseURL).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                Text(profile.loginState.rawValue)
+                                    .font(.caption2)
+                                    .foregroundStyle(profile.loginState == .loggedIn ? .green : (profile.loginState == .error ? .red : .secondary))
                             }
                             Spacer()
                             if siteProfiles.activeProfileID == profile.id {
@@ -61,8 +76,8 @@ struct ProfileScreen: View {
                     }
                     .swipeActions(edge: .trailing) {
                         Button("Edit") { editingProfile = profile; isProfileEditorPresented = true }
-                        if siteProfiles.profiles.count > 1 {
-                            Button("Delete", role: .destructive) { siteProfiles.delete(profile) }
+                        if siteProfiles.profiles.count > 1 && profile.id.uuidString != "00000000-0000-0000-0000-000000000001" {
+                            Button("Delete", role: .destructive) { profilePendingDeletion = profile }
                         }
                     }
                 }
@@ -141,8 +156,8 @@ struct ProfileScreen: View {
                             Spacer()
                             if siteProfiles.activeProfileID == profile.id { Image(systemName: "checkmark.circle.fill") }
                             Button("Edit") { editingProfile = profile; isProfileEditorPresented = true }
-                            if siteProfiles.profiles.count > 1 {
-                                Button("Delete", role: .destructive) { siteProfiles.delete(profile) }
+                            if siteProfiles.profiles.count > 1 && profile.id.uuidString != "00000000-0000-0000-0000-000000000001" {
+                                Button("Delete", role: .destructive) { profilePendingDeletion = profile }
                             }
                         }
                     }
@@ -347,11 +362,21 @@ private struct SiteProfileEditorSheet: View {
     let manager: HanaSiteProfileManager
     @Environment(\.dismiss) private var dismiss
     @State private var draft: SiteProfile
+    @State private var email = ""
+    @State private var password = ""
+    @State private var token = ""
+    @State private var sources = HanaSourceManager()
 
     init(profile: Binding<SiteProfile?>, manager: HanaSiteProfileManager) {
         _profile = profile
         self.manager = manager
-        _draft = State(initialValue: profile.wrappedValue ?? SiteProfile(id: UUID(), displayName: "", baseURL: "", loginType: .cookieSync, sourceID: nil, enabled: true, loginState: .loggedOut, lastCookieSyncAt: nil, error: nil))
+        let draftProfile = profile.wrappedValue ?? SiteProfile(id: UUID(), displayName: "", baseURL: "", loginType: .cookieSync, sourceID: nil, enabled: true, loginState: .loggedOut, lastCookieSyncAt: nil, error: nil)
+        _draft = State(initialValue: draftProfile)
+        if let credential = manager.readAccountCredential(profileID: draftProfile.id) {
+            _email = State(initialValue: credential.email)
+            _password = State(initialValue: credential.password)
+        }
+        _token = State(initialValue: manager.readToken(profileID: draftProfile.id) ?? "")
     }
 
     var body: some View {
@@ -363,6 +388,25 @@ private struct SiteProfileEditorSheet: View {
                     ForEach(HanaLoginType.allCases) { Text($0.rawValue).tag($0) }
                 }
                 Toggle("Enabled", isOn: $draft.enabled)
+                Picker("Linked Source", selection: $draft.sourceID) {
+                    Text("None").tag(nil as UUID?)
+                    ForEach(sources.sources) { source in
+                        Text(source.name).tag(source.id as UUID?)
+                    }
+                }
+
+                if draft.loginType == .account {
+                    Section("Account Credentials") {
+                        TextField("Email", text: $email).textInputAutocapitalization(.never).keyboardType(.emailAddress)
+                        SecureField("Password", text: $password)
+                    }
+                }
+
+                if draft.loginType == .token {
+                    Section("API Token") {
+                        SecureField("Token / API Key", text: $token)
+                    }
+                }
             }
             .navigationTitle(profile == nil ? "Add Profile" : "Edit Profile")
             .toolbar {
@@ -373,6 +417,26 @@ private struct SiteProfileEditorSheet: View {
                               !draft.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
                         draft.baseURL = normalized
                         if manager.profiles.contains(where: { $0.id == draft.id }) { manager.update(draft) } else { manager.add(draft) }
+                        if draft.loginType == .account,
+                           !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                           !password.isEmpty {
+                            manager.saveAccountCredential(profileID: draft.id, email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
+                        }
+                        for var source in sources.sources {
+                            if source.profileID == draft.id {
+                                source.profileID = nil
+                                sources.update(source)
+                            }
+                        }
+                        if let sourceID = draft.sourceID,
+                           var linkedSource = sources.sources.first(where: { $0.id == sourceID }) {
+                            linkedSource.profileID = draft.id
+                            sources.update(linkedSource)
+                        }
+                        if draft.loginType == .token {
+                            if token.isEmpty { HanaKeychain.delete(account: manager.tokenAccount(draft.id)) }
+                            else { manager.saveToken(profileID: draft.id, token: token) }
+                        }
                         profile = draft
                         dismiss()
                     }.disabled(draft.displayName.isEmpty || draft.baseURL.isEmpty)

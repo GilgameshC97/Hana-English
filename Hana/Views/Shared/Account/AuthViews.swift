@@ -101,13 +101,16 @@ struct SiteCredentialLoginSheet: View {
             await services.applyLoginState(user: user)
             if let profileID = siteProfiles.activeProfile?.id {
                 siteProfiles.saveAccountCredential(profileID: profileID, email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
-                siteProfiles.setLoginMetadata(profileID, state: .loggedIn)
+                siteProfiles.setLoginMetadata(profileID, state: .loggedIn, lastSync: .now)
             }
             dismiss()
         } catch {
             if services.siteSession.handle(error) {
                 dismiss()
             } else {
+                if let profileID = siteProfiles.activeProfile?.id {
+                    siteProfiles.setLoginMetadata(profileID, state: .error, error: error.localizedDescription)
+                }
                 alertMessage = .error(error.localizedDescription)
             }
         }

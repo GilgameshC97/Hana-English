@@ -214,13 +214,13 @@ final class SiteWebSession: HanaCloudflareChallengeResolving {
         let avatarURLStringKey = Self.scopedKey("avatarURLString", suffix: keySuffix)
         let cloudflareVerifiedAtKey = Self.scopedKey("cloudflareVerifiedAt", suffix: keySuffix)
         self.isLoggedIn = defaults.object(forKey: isLoggedInKey) as? Bool
-            ?? (legacyHost ? defaults.bool(forKey: Self.legacyIsLoggedInKey) : false)
+            ?? (profileID == nil && legacyHost ? defaults.bool(forKey: Self.legacyIsLoggedInKey) : false)
         self.userID = defaults.string(forKey: userIDKey)
-            ?? (legacyHost ? defaults.string(forKey: Self.legacyUserIDKey) : nil)
+            ?? (profileID == nil && legacyHost ? defaults.string(forKey: Self.legacyUserIDKey) : nil)
         self.username = defaults.string(forKey: usernameKey)
-            ?? (legacyHost ? defaults.string(forKey: Self.legacyUsernameKey) : nil)
+            ?? (profileID == nil && legacyHost ? defaults.string(forKey: Self.legacyUsernameKey) : nil)
         self.avatarURLString = defaults.string(forKey: avatarURLStringKey)
-            ?? (legacyHost ? defaults.string(forKey: Self.legacyAvatarURLStringKey) : nil)
+            ?? (profileID == nil && legacyHost ? defaults.string(forKey: Self.legacyAvatarURLStringKey) : nil)
         self.lastCloudflareVerifiedAt = defaults.object(forKey: cloudflareVerifiedAtKey) as? Date
     }
 

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileDetailScreen: View {
     @Environment(HanaServices.self) private var services
+    @Environment(HanaSiteProfileManager.self) private var siteProfiles
     @State private var isCredentialLoginPresented = false
 
     var body: some View {
@@ -9,6 +10,11 @@ struct ProfileDetailScreen: View {
             .navigationTitle("Profile")
             .sheet(isPresented: $isCredentialLoginPresented) {
                 SiteCredentialLoginSheet()
+            }
+            .onChange(of: services.siteSession.lastCookieSyncAt) { _, newValue in
+                if let newValue, let profileID = siteProfiles.activeProfile?.id {
+                    siteProfiles.setLoginMetadata(profileID, state: services.siteSession.isLoggedIn ? .loggedIn : .syncing, lastSync: newValue)
+                }
             }
     }
 
@@ -98,7 +104,13 @@ struct ProfileDetailScreen: View {
         Section("Account") {
             if services.siteSession.isLoggedIn {
                 Button(role: .destructive) {
-                    Task { await services.logout() }
+                    Task {
+                        await services.logout()
+                        if let profileID = siteProfiles.activeProfile?.id {
+                            siteProfiles.clearAccountCredential(profileID: profileID)
+                            siteProfiles.setLoginMetadata(profileID, state: .loggedOut)
+                        }
+                    }
                 } label: {
                     Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
                 }
