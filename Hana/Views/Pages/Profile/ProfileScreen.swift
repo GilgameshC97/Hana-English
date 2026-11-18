@@ -33,9 +33,10 @@ struct ProfileScreen: View {
             }
             .confirmationDialog("Delete Site Profile", isPresented: Binding(get: { profilePendingDeletion != nil }, set: { if !$0 { profilePendingDeletion = nil } }), titleVisibility: .visible) {
                 Button("Delete \(profilePendingDeletion?.displayName ?? "Profile")", role: .destructive) {
-                    if let profilePendingDeletion {
-                        siteProfiles.delete(profilePendingDeletion)
-                        profilePendingDeletion = nil
+                    let profileToDelete = profilePendingDeletion
+                    profilePendingDeletion = nil
+                    if let profileToDelete {
+                        siteProfiles.delete(profileToDelete)
                     }
                 }
                 Button("Cancel", role: .cancel) { profilePendingDeletion = nil }
