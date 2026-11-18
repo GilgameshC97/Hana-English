@@ -219,7 +219,6 @@ final class SiteWebSession: HanaCloudflareChallengeResolving {
         self.avatarURLString = defaults.string(forKey: avatarURLStringKey)
             ?? (legacyHost ? defaults.string(forKey: Self.legacyAvatarURLStringKey) : nil)
         self.lastCloudflareVerifiedAt = defaults.object(forKey: cloudflareVerifiedAtKey) as? Date
-        loadStoredCookieMetadata()
     }
 
     @discardableResult
@@ -608,10 +607,7 @@ final class SiteWebSession: HanaCloudflareChallengeResolving {
         }) {
             return true
         }
-        guard let storedCookieHeader else { return false }
-        return cookiePairs(from: storedCookieHeader).contains {
-            $0.name == SiteWebCookieScope.cloudflareClearanceName
-        }
+        return false
     }
 
     private var cloudflareClearanceExpiryDate: Date? {

@@ -1119,6 +1119,10 @@ private struct NetworkSettingsScreen: View {
     @State private var isApplyingNetworkSettings = false
     @State private var isCredentialLoginPresented = false
     @State private var isNetworkSelectionReady = false
+    @State private var isPageReady = false
+    @State private var latencyError: String?
+    @State private var latencyTask: Task<Void, Never>?
+    @State private var invalidationTask: Task<Void, Never>?
 
     var body: some View {
         Form {
@@ -1207,16 +1211,39 @@ private struct NetworkSettingsScreen: View {
             }
 
             Section("Site Speed Test") {
-                Button {
-                    Task { await runLatencyTests() }
-                } label: {
+                HStack {
+                    Button {
+                        guard !isTestingLatency else { return }
+                        latencyTask = Task { await runLatencyTests() }
+                    } label: {
+                        if isTestingLatency {
+                            Label("Testing Speed...", systemImage: "hourglass")
+                        } else {
+                            Label("Test Site URLs", systemImage: "speedometer")
+                        }
+                    }
+                    .disabled(isTestingLatency)
+
                     if isTestingLatency {
-                        Label("Testing Speed...", systemImage: "hourglass")
-                    } else {
-                        Label("Test Site URLs", systemImage: "speedometer")
+                        Button("Cancel") {
+                            latencyTask?.cancel()
+                            latencyTask = nil
+                            isTestingLatency = false
+                            latencyError = "Speed test cancelled"
+                        }
+                        .foregroundStyle(.red)
                     }
                 }
-                .disabled(isTestingLatency)
+
+                if let latencyError {
+                    Text(latencyError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                    Button("Retry") {
+                        guard !isTestingLatency else { return }
+                        latencyTask = Task { await runLatencyTests() }
+                    }
+                }
 
                 ForEach(latencyResults) { result in
                     LabeledContent {
@@ -1270,10 +1297,30 @@ private struct NetworkSettingsScreen: View {
         .sheet(isPresented: $isCredentialLoginPresented) {
             SiteCredentialLoginSheet()
         }
+        .overlay {
+            if !isPageReady {
+                VStack(spacing: 10) {
+                    ProgressView()
+                    Text("Opening Network & Site")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.background.opacity(0.92))
+            }
+        }
         .onAppear {
             isNetworkSelectionReady = false
             selectedBaseURL = services.httpClient.baseURL.absoluteString
             isNetworkSelectionReady = true
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(50))
+                isPageReady = true
+            }
+        }
+        .onDisappear {
+            latencyTask?.cancel()
+            invalidationTask?.cancel()
         }
         .onChange(of: selectedBaseURL) { _, _ in
             guard isNetworkSelectionReady else { return }
@@ -1299,23 +1346,51 @@ private struct NetworkSettingsScreen: View {
             return
         }
 
+        guard !isApplyingNetworkSettings else { return }
         isApplyingNetworkSettings = true
-        defer { isApplyingNetworkSettings = false }
         storedSiteBaseURL = normalized
         selectedBaseURL = normalized
-        await services.siteSession.invalidateCloudflareVerification()
+
+        invalidationTask?.cancel()
+        invalidationTask = Task { @MainActor [services] in
+            await services.siteSession.invalidateCloudflareVerification()
+        }
+        Task { @MainActor [invalidationTask] in
+            try? await Task.sleep(for: .seconds(10))
+            invalidationTask?.cancel()
+        }
+
         reloadServices(url)
+        isApplyingNetworkSettings = false
         toastMessage = .success("Network settings applied")
     }
 
     private func runLatencyTests() async {
+        guard !isTestingLatency else { return }
         isTestingLatency = true
         latencyResults = []
-        defer { isTestingLatency = false }
+        latencyError = nil
+        defer {
+            isTestingLatency = false
+            latencyTask = nil
+        }
 
         for url in siteCandidates() {
+            try? await Task.sleep(for: .milliseconds(1))
+            guard !Task.isCancelled else {
+                latencyError = "Speed test cancelled"
+                return
+            }
             let result = await measureSiteLatency(url)
+            guard !Task.isCancelled else {
+                latencyError = "Speed test cancelled"
+                return
+            }
             latencyResults.append(result)
+        }
+
+        if latencyResults.allSatisfy({ !$0.isReachable }) {
+            latencyError = "All site checks failed or timed out. Check the site URL, proxy, and network connection."
         }
     }
 
