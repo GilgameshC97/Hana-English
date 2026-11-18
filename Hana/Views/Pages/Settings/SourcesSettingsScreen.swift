@@ -6,6 +6,7 @@ struct SourcesSettingsScreen: View {
     @State private var lookupText = ""
     @State private var lookupResult: HanaSourceSearchResult?
     @State private var testMessage = ""
+    @State private var lockSettingsPIN = HanaKeychain.read(account: "hana.lockSettingsPin") ?? ""
     @State private var showingEditor = false
 
     var body: some View {
@@ -59,12 +60,22 @@ struct SourcesSettingsScreen: View {
 
             Section("Privacy") {
                 Toggle("Biometric Lock", isOn: .init(get: { UserDefaults.standard.bool(forKey: HanaSettingsKey.biometricLockEnabled) }, set: { UserDefaults.standard.set($0, forKey: HanaSettingsKey.biometricLockEnabled) }))
-                Toggle("Private Mode", isOn: .init(get: { UserDefaults.standard.bool(forKey: HanaSettingsKey.privateMode) }, set: { UserDefaults.standard.set($0, forKey: HanaSettingsKey.privateMode) }))
+                Toggle("Private Mode", isOn: .init(get: { UserDefaults.standard.bool(forKey: HanaSettingsKey.privateMode) }, set: { value in
+                    if value && lockSettingsPIN.count < 4 { testMessage = "Set a 4–8 digit PIN before enabling Private Mode." }
+                    else { UserDefaults.standard.set(value, forKey: HanaSettingsKey.privateMode) }
+                }))
                 Toggle("Blur Thumbnails and Titles", isOn: .init(get: { UserDefaults.standard.bool(forKey: HanaSettingsKey.blurThumbnails) }, set: { UserDefaults.standard.set($0, forKey: HanaSettingsKey.blurThumbnails) }))
                 Toggle("Hide Watched Items", isOn: .init(get: { UserDefaults.standard.bool(forKey: HanaSettingsKey.hideWatchedItems) }, set: { UserDefaults.standard.set($0, forKey: HanaSettingsKey.hideWatchedItems) }))
                 Toggle("Auto-Delete Watched Downloads", isOn: .init(get: { UserDefaults.standard.bool(forKey: HanaSettingsKey.autoDeleteWatchedDownloads) }, set: { UserDefaults.standard.set($0, forKey: HanaSettingsKey.autoDeleteWatchedDownloads) }))
-                SecureField("Lock Settings PIN", text: .init(get: { HanaKeychain.read(account: "hana.lockSettingsPin") ?? "" }, set: { HanaKeychain.save($0, account: "hana.lockSettingsPin") }))
-                    .textContentType(.password)
+                SecureField("Lock Settings PIN", text: $lockSettingsPIN)
+                    .textContentType(.oneTimeCode)
+                    .keyboardType(.numberPad)
+                    .onChange(of: lockSettingsPIN) { _, value in
+                        let digits = value.filter(\.isNumber)
+                        lockSettingsPIN = String(digits.prefix(8))
+                        if lockSettingsPIN.count >= 4 { HanaKeychain.save(lockSettingsPIN, account: "hana.lockSettingsPin") }
+                        else { HanaKeychain.delete(account: "hana.lockSettingsPin") }
+                    }
             }
 
             Section("Playback & Picture-in-Picture") {
