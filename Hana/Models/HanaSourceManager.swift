@@ -42,6 +42,7 @@ final class HanaSourceManager {
     private(set) var sources: [HanaSource]
 
     init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         if let data = defaults.data(forKey: Self.storageKey),
            let saved = try? JSONDecoder().decode([HanaSource].self, from: data) {
             sources = saved
@@ -53,7 +54,6 @@ final class HanaSourceManager {
             )]
             save(defaults: defaults)
         }
-        self.defaults = defaults
     }
 
     private let defaults: UserDefaults
