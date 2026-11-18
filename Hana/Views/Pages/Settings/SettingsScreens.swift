@@ -1110,7 +1110,7 @@ private struct NetworkSettingsScreen: View {
             }
 
             Section("Site URL") {
-                Picker(selection: selectedBaseURLBinding) {
+                Picker(selection: $selectedBaseURL) {
                     ForEach(HanaSiteBaseURL.options, id: \.self) { url in
                         Text(url).tag(url)
                     }
@@ -1228,16 +1228,10 @@ private struct NetworkSettingsScreen: View {
         .onAppear {
             selectedBaseURL = services.httpClient.baseURL.absoluteString
         }
-    }
-
-    private var selectedBaseURLBinding: Binding<String> {
-        Binding(
-            get: { selectedBaseURL },
-            set: { newValue in
-                selectedBaseURL = newValue
-                applySiteBaseURL(newValue)
-            }
-        )
+        .onChange(of: selectedBaseURL) { _, newValue in
+            guard newValue != services.httpClient.baseURL.absoluteString else { return }
+            applySiteBaseURL(newValue)
+        }
     }
 
     private var selectedProxyMode: HanaNetworkProxyMode {
