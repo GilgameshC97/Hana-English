@@ -424,4 +424,3 @@ extension HanaBackupSettings {
         return settings
     }
 }
-}
