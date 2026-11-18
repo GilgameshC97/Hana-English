@@ -111,6 +111,11 @@ private struct MobileSettingsScreen: View {
                     SettingsNavigationRow(category: .network)
                 }
                 NavigationLink {
+                    SourcesSettingsScreen()
+                } label: {
+                    SettingsNavigationRow(category: .sources)
+                }
+                NavigationLink {
                     LocalDataSettingsScreen()
                 } label: {
                     SettingsNavigationRow(category: .localData)
@@ -142,6 +147,7 @@ private struct MacSettingsScreen: View {
                     settingsSidebarItem(.hKeyframes)
                     settingsSidebarItem(.downloads)
                     settingsSidebarItem(.network)
+                    settingsSidebarItem(.sources)
                     settingsSidebarItem(.localData)
                 }
 
@@ -189,6 +195,8 @@ private struct MacSettingsScreen: View {
             DownloadSettingsScreen()
         case .network:
             NetworkSettingsScreen()
+        case .sources:
+            SourcesSettingsScreen()
         case .localData:
             LocalDataSettingsScreen()
         case .about:
@@ -203,6 +211,7 @@ private enum MacSettingsCategory: String, CaseIterable, Identifiable {
     case hKeyframes
     case downloads
     case network
+    case sources
     case localData
     case about
 
@@ -226,7 +235,7 @@ private enum MacSettingsCategory: String, CaseIterable, Identifiable {
             12
         case .about:
             13
-        case .general, .hKeyframes, .downloads, .network, .localData:
+        case .general, .hKeyframes, .downloads, .network, .sources, .localData:
             14
         }
     }
@@ -243,6 +252,8 @@ private enum MacSettingsCategory: String, CaseIterable, Identifiable {
             .downloads
         case .network:
             .network
+        case .sources:
+            .sources
         case .localData:
             .localData
         case .about:
@@ -672,6 +683,7 @@ private enum SettingsCategory {
     case downloads
     case appearance
     case network
+    case sources
     case localData
     case about
 
@@ -689,6 +701,8 @@ private enum SettingsCategory {
             "Appearance"
         case .network:
             "Network & Site"
+        case .sources:
+            "Sources"
         case .localData:
             "Local Data"
         case .about:
@@ -710,6 +724,8 @@ private enum SettingsCategory {
             "Follow system, or lock light/dark mode"
         case .network:
             "Site URLs, proxy, speed test & auth"
+        case .sources:
+            "Manage custom sources, H@H, lookup & global search"
         case .localData:
             "View counts & delete locally saved data"
         case .about:
@@ -731,6 +747,8 @@ private enum SettingsCategory {
             "circle.lefthalf.filled"
         case .network:
             "network"
+        case .sources:
+            "globe.badge.chevron.backward"
         case .localData:
             "internaldrive"
         case .about:
@@ -752,6 +770,8 @@ private enum SettingsCategory {
             .pink
         case .network:
             .orange
+        case .sources:
+            .cyan
         case .localData:
             .brown
         case .about:
@@ -768,6 +788,10 @@ private struct PlaybackSettingsScreen: View {
     @AppStorage(HanaSettingsKey.pictureInPictureEnabled) private var pictureInPictureEnabled = true
     @AppStorage(HanaSettingsKey.loopPlaybackEnabled) private var loopPlaybackEnabled = false
     @AppStorage(HanaSettingsKey.playerLongPressRate) private var playerLongPressRate = HanaPlaybackSpeedCatalog.defaultLongPressRate
+    @AppStorage(HanaSettingsKey.autoPiP) private var autoPiP = true
+    @AppStorage(HanaSettingsKey.sleepTimerMinutes) private var sleepTimerMinutes = 0
+    @AppStorage(HanaSettingsKey.stopAtEpisodeEnd) private var stopAtEpisodeEnd = false
+    @AppStorage(HanaSettingsKey.subtitleDelay) private var subtitleDelay = 0.0
 
     var body: some View {
         Form {
@@ -802,6 +826,18 @@ private struct PlaybackSettingsScreen: View {
                 } label: {
                     Label("Long Press Speed", systemImage: "forward")
                 }
+            }
+
+            Section("Sleep Timer & Subtitles") {
+                Picker("Sleep Timer", selection: $sleepTimerMinutes) {
+                    Text("Off").tag(0)
+                    Text("15 Minutes").tag(15)
+                    Text("30 Minutes").tag(30)
+                    Text("60 Minutes").tag(60)
+                }
+                Toggle("Stop at End of Episode", isOn: $stopAtEpisodeEnd)
+                Stepper("Subtitle Delay \(subtitleDelay, specifier: "%.1f")s", value: $subtitleDelay, in: -30...30, step: 0.5)
+                Toggle("Auto Picture in Picture", isOn: $autoPiP)
             }
 
             Section("History & Progress") {
@@ -1354,7 +1390,6 @@ private struct SiteLatencyResult: Identifiable, Hashable {
 
 private struct LocalDataSettingsScreen: View {
     @Environment(HanaServices.self) private var services
-    @Environment(DisciplineModeStore.self) private var disciplineModeStore
     @Environment(\.hanaReloadServices) private var reloadServices
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \SearchHistoryRecord.createdAt, order: .reverse) private var searchHistory: [SearchHistoryRecord]
@@ -1624,7 +1659,6 @@ private struct LocalDataSettingsScreen: View {
                     modelContext: modelContext,
                     records: records
                 )
-                disciplineModeStore.reload()
                 if let normalizedBaseURL = HanaSiteBaseURL.normalized(archive.settings.siteBaseURL),
                    let restoredBaseURL = URL(string: normalizedBaseURL),
                    restoredBaseURL != previousBaseURL {

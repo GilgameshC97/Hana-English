@@ -133,7 +133,6 @@ nonisolated struct HanaBackupSettings: Codable, Equatable, Sendable {
     var warnBeforeMobileDataDownload: Bool
     var autoCheckForUpdates: Bool
     var updateLinkDestination: String
-    var disciplineModeConfiguration: DisciplineModeConfiguration?
 }
 
 nonisolated struct HanaBackupWatchHistory: Codable, Equatable, Sendable {
@@ -422,26 +421,7 @@ extension HanaBackupSettings {
         guard HanaUpdateLinkDestination(rawValue: updateLinkDestination) != nil else {
             throw HanaBackupError.invalidField("Update Link Target")
         }
-        if let configuration = disciplineModeConfiguration {
-            try configuration.validateForBackup()
-        }
         return settings
     }
 }
-
-extension DisciplineModeConfiguration {
-    fileprivate func validateForBackup() throws {
-        switch mode {
-        case .single:
-            break
-        case .recurring(let configuration):
-            guard configuration.isValid else {
-                throw HanaBackupError.invalidField("Discipline Cycle Config")
-            }
-        case .weekly(let configuration):
-            guard configuration.isValid else {
-                throw HanaBackupError.invalidField("Discipline Weekly Config")
-            }
-        }
-    }
 }

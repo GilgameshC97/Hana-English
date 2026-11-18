@@ -18,6 +18,8 @@ struct SearchScreen: View {
     @State private var isFilterPresented = false
     @State private var hasLoadedInitialCriteria = false
     @State private var toastMessage: HanaToastMessage?
+    @State private var sourceManager = HanaSourceManager()
+    @State private var sourceResults: [HanaSourceSearchResult] = []
 
     init(initialCriteria: HanimeSearchCriteria = .empty, locksQueryEditing: Bool = false) {
         let normalizedCriteria = initialCriteria.normalized()
@@ -47,6 +49,22 @@ struct SearchScreen: View {
                             if !visibleFilterTags.isEmpty {
                                 SearchFilterSummary(tags: visibleFilterTags)
                                     .padding(.horizontal)
+                            }
+                            if !sourceResults.isEmpty {
+                                Section("From Enabled Sources") {
+                                    ForEach(sourceResults) { result in
+                                        if let detailURL = result.detailURL {
+                                            Link(destination: detailURL) {
+                                                HStack {
+                                                    VStack(alignment: .leading) { Text(result.title).lineLimit(2); Text(result.sourceName).font(.caption).foregroundStyle(.secondary) }
+                                                    Spacer()
+                                                }.padding(8).background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 8))
+                                            }.buttonStyle(.plain)
+                                        } else {
+                                            Text("\(result.title) · \(result.sourceName)")
+                                        }
+                                    }
+                                }.padding(.horizontal)
                             }
 
                             let portraitVideos = videos.filter { $0.style == .compact }
@@ -185,6 +203,9 @@ struct SearchScreen: View {
 
         do {
             let videos = try await services.repository.search(criteria: nextCriteria, page: page)
+            if reset, !nextCriteria.query.isEmpty {
+                sourceResults = await sourceManager.globalSearch(query: nextCriteria.query)
+            }
             currentPage = page
             canLoadMore = !videos.isEmpty
             saveSearch(nextCriteria)

@@ -33,8 +33,16 @@ enum HanaSettingsKey {
     static let autoCheckForUpdates = "hana.settings.autoCheckForUpdates"
     static let lastUpdateCheckDate = "hana.settings.lastUpdateCheckDate"
     static let updateLinkDestination = "hana.settings.updateLinkDestination"
-    static let disciplineModeConfiguration = "hana.settings.disciplineModeConfiguration"
     static let biometricLockEnabled = "hana.settings.biometricLockEnabled"
+    static let autoPiP = "hana.settings.autoPiP"
+    static let privateMode = "hana.settings.privateMode"
+    static let blurThumbnails = "hana.settings.blurThumbnails"
+    static let sleepTimerMinutes = "hana.settings.sleepTimerMinutes"
+    static let stopAtEpisodeEnd = "hana.settings.stopAtEpisodeEnd"
+    static let subtitleDelay = "hana.settings.subtitleDelay"
+    static let thumbnailWifiOnly = "hana.settings.thumbnailWifiOnly"
+    static let hideWatchedItems = "hana.settings.hideWatchedItems"
+    static let autoDeleteWatchedDownloads = "hana.settings.autoDeleteWatchedDownloads"
 }
 
 enum HanaSiteBaseURL {

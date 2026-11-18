@@ -22,16 +22,8 @@ struct HanaBackupServiceTests {
         let exportedAt = Date(timeIntervalSince1970: 1_800_000_000)
         seedAllModelTypes(in: sourceContext)
         try sourceContext.save()
-        let disciplineConfiguration = DisciplineModeConfiguration(
-            createdAt: Date(timeIntervalSince1970: 1_700_000_000),
-            mode: .weekly(.init(allowedWeekdayNumbers: [2, 4, 6]))
-        )
         sourceDefaults.set("dark", forKey: HanaSettingsKey.appearanceMode)
         sourceDefaults.set(3, forKey: HanaSettingsKey.downloadConcurrency)
-        sourceDefaults.set(
-            try JSONEncoder().encode(disciplineConfiguration),
-            forKey: HanaSettingsKey.disciplineModeConfiguration
-        )
 
         let sourceArchive = try HanaBackupService.makeArchive(
             modelContext: sourceContext,
@@ -433,8 +425,7 @@ struct HanaBackupServiceTests {
                 downloadConcurrency: 2,
                 warnBeforeMobileDataDownload: true,
                 autoCheckForUpdates: true,
-                updateLinkDestination: HanaUpdateLinkDestination.defaultValue,
-                disciplineModeConfiguration: nil
+                updateLinkDestination: HanaUpdateLinkDestination.defaultValue
             ),
             watchHistory: [],
             searchHistory: [],

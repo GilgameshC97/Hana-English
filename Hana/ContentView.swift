@@ -16,7 +16,6 @@ import AppKit
 
 struct ContentView: View {
     @Environment(HanaServices.self) private var services
-    @Environment(DisciplineModeStore.self) private var disciplineModeStore
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(HanaSettingsKey.biometricLockEnabled) private var isBiometricLockEnabled = false
@@ -51,18 +50,12 @@ struct ContentView: View {
                 BiometricLockOverlayView {
                     biometricAuth.authenticate()
                 }
-            } else if disciplineModeStore.isLocked {
-                DisciplineModeLockScreen()
             } else {
                 unlockedAppContent
             }
         }
-        .task {
-            await monitorDisciplineMode()
-        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
-                disciplineModeStore.refresh()
                 if isBiometricLockEnabled && !biometricAuth.isUnlocked {
                     biometricAuth.authenticate()
                 }
@@ -302,17 +295,6 @@ struct ContentView: View {
             records: downloadQueue
         )
     }
-
-    private func monitorDisciplineMode() async {
-        while !Task.isCancelled {
-            disciplineModeStore.refresh()
-            do {
-                try await Task.sleep(for: .seconds(30))
-            } catch {
-                return
-            }
-        }
-    }
 }
 
 #if os(macOS)
@@ -457,7 +439,6 @@ private extension View {
 #Preview {
     ContentView()
         .environment(HanaServices())
-        .environment(DisciplineModeStore())
         .modelContainer(
             for: [
                 WatchHistoryRecord.self,

@@ -73,9 +73,6 @@ enum HanaBackupService {
         beforeTransactionCompletion: () throws -> Void = {}
     ) throws -> HanaBackupImportSummary {
         let archive = try unvalidatedArchive.validated()
-        let disciplineModeData = try archive.settings.disciplineModeConfiguration.map {
-            try JSONEncoder().encode($0)
-        }
         if modelContext.hasChanges {
             try modelContext.save()
         }
@@ -301,17 +298,12 @@ enum HanaBackupService {
             throw error
         }
 
-        applySettings(archive.settings, disciplineModeData: disciplineModeData, defaults: defaults)
+        applySettings(archive.settings, defaults: defaults)
         summary.settingsRestored = true
         return summary
     }
 
     private static func makeSettings(defaults: UserDefaults) -> HanaBackupSettings {
-        let disciplineModeConfiguration = defaults.data(
-            forKey: HanaSettingsKey.disciplineModeConfiguration
-        )
-        .flatMap { try? JSONDecoder().decode(DisciplineModeConfiguration.self, from: $0) }
-
         return HanaBackupSettings(
             siteBaseURL: HanaSiteBaseURL.normalized(
                 string(defaults, HanaSettingsKey.siteBaseURL, HanaSiteBaseURL.defaultValue))
@@ -347,13 +339,11 @@ enum HanaBackupService {
             autoCheckForUpdates: bool(defaults, HanaSettingsKey.autoCheckForUpdates, true),
             updateLinkDestination: string(
                 defaults, HanaSettingsKey.updateLinkDestination, HanaUpdateLinkDestination.defaultValue),
-            disciplineModeConfiguration: disciplineModeConfiguration
         )
     }
 
     private static func applySettings(
         _ settings: HanaBackupSettings,
-        disciplineModeData: Data?,
         defaults: UserDefaults
     ) {
         defaults.set(settings.siteBaseURL, forKey: HanaSettingsKey.siteBaseURL)
@@ -380,11 +370,6 @@ enum HanaBackupService {
             settings.warnBeforeMobileDataDownload, forKey: HanaSettingsKey.warnBeforeMobileDataDownload)
         defaults.set(settings.autoCheckForUpdates, forKey: HanaSettingsKey.autoCheckForUpdates)
         defaults.set(settings.updateLinkDestination, forKey: HanaSettingsKey.updateLinkDestination)
-        if let disciplineModeData {
-            defaults.set(disciplineModeData, forKey: HanaSettingsKey.disciplineModeConfiguration)
-        } else {
-            defaults.removeObject(forKey: HanaSettingsKey.disciplineModeConfiguration)
-        }
     }
 
     private static func dictionary<Model>(
