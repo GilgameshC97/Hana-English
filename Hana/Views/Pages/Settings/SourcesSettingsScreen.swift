@@ -6,7 +6,7 @@ struct SourcesSettingsScreen: View {
     @State private var lookupText = ""
     @State private var lookupResult: HanaSourceSearchResult?
     @State private var testMessage = ""
-    @State private var lockSettingsPIN = HanaKeychain.read(account: "hana.lockSettingsPin") ?? ""
+    @State private var lockSettingsPIN = ""
     @State private var showingEditor = false
 
     var body: some View {
@@ -91,6 +91,9 @@ struct SourcesSettingsScreen: View {
                 Text(testMessage.isEmpty ? "Select a source and use Test Connection." : testMessage)
             }
         }
+        .task {
+            lockSettingsPIN = HanaKeychain.read(account: "hana.lockSettingsPin") ?? ""
+        }
         .navigationTitle("Sources")
         .sheet(isPresented: $showingEditor) {
             SourceEditorSheet(source: Binding(get: { editingSource ?? HanaSource(id: UUID(), name: "", baseURL: "", type: .hanime, enabled: true, searchEndpoint: "/search", browseEndpoint: "/", lastTestAt: nil, isConnected: nil) }, set: { editingSource = $0 }), manager: manager, testMessage: $testMessage)
@@ -152,11 +155,11 @@ private struct SourceEditorSheet: View {
 
 private struct HentaiAtHomeSettingsView: View {
     let manager: HanaSourceManager
-    @State private var clientID = HanaKeychain.read(account: "hana.hh.clientID") ?? ""
-    @State private var host = HanaKeychain.read(account: "hana.hh.host") ?? ""
-    @State private var port = HanaKeychain.read(account: "hana.hh.port") ?? "443"
-    @State private var ehUsername = HanaKeychain.read(account: "hana.hh.ehUsername") ?? ""
-    @State private var exCookies = HanaKeychain.read(account: "hana.hh.exCookies") ?? ""
+    @State private var clientID = ""
+    @State private var host = ""
+    @State private var port = "443"
+    @State private var ehUsername = ""
+    @State private var exCookies = ""
     @State private var status = "Disconnected"
 
     var body: some View {
@@ -174,6 +177,13 @@ private struct HentaiAtHomeSettingsView: View {
             Task { await test() }
         }
         Text(status).foregroundStyle(status == "Connected" ? .green : .secondary)
+            .task {
+                clientID = HanaKeychain.read(account: "hana.hh.clientID") ?? ""
+                host = HanaKeychain.read(account: "hana.hh.host") ?? ""
+                port = HanaKeychain.read(account: "hana.hh.port") ?? "443"
+                ehUsername = HanaKeychain.read(account: "hana.hh.ehUsername") ?? ""
+                exCookies = HanaKeychain.read(account: "hana.hh.exCookies") ?? ""
+            }
     }
 
     private func test() async {

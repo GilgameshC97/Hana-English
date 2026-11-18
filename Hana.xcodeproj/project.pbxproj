@@ -194,23 +194,6 @@
 			path = Fixtures;
 			sourceTree = "<group>";
 		};
-		F44DB4992FB761000C55FF9 /* Config */ = {
-			isa = PBXGroup;
-			children = (
-				F44DB4982FB761000C55FF9 /* Version.xcconfig */,
-			);
-			path = Config;
-			sourceTree = "<group>";
-		};
-		F44DB4742FB7571400C55FF9 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				F44DB4732FB7571400C55FF9 /* Hana.app */,
-				F44DB4A02FB762000C55FF9 /* HanaTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */

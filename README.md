@@ -2,6 +2,8 @@
 
 # Hana
 
+> This repository is a fork of [celia-sh/Hana](https://github.com/celia-sh/Hana).
+
 Hana is a SwiftUI media client for iPhone, iPad, Mac, and folding iPhone layouts.
 
 ## Features

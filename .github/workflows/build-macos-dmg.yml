@@ -66,8 +66,14 @@ jobs:
 
       - name: Select Xcode
         run: |
-          if [ -d /Applications/Xcode_26.5.app/Contents/Developer ]; then
+          set -euo pipefail
+          if [ -d /Applications/Xcode_26.6.app/Contents/Developer ]; then
+            echo "DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer" >> "$GITHUB_ENV"
+          elif [ -d /Applications/Xcode_26.5.app/Contents/Developer ]; then
             echo "DEVELOPER_DIR=/Applications/Xcode_26.5.app/Contents/Developer" >> "$GITHUB_ENV"
+          else
+            echo "::error::Neither Xcode_26.6.app nor Xcode_26.5.app is installed on macos-26"
+            exit 1
           fi
 
       - name: Show build environment
