@@ -27,7 +27,7 @@ final class HanimeRepository {
 
     func homePage() async throws -> HanimeHomePage {
         let html = try await httpClient.html(for: .home())
-        return try parser.parseHome(html)
+        return try parser.parseHome(html).filteredByContentPolicy()
     }
 
     func currentUser(
@@ -73,8 +73,9 @@ final class HanimeRepository {
     }
 
     func search(criteria: HanimeSearchCriteria, page: Int = 1) async throws -> [HanimeInfo] {
+        if ContentSafetyPolicy.isBlocked(criteria.query) { return [] }
         let html = try await httpClient.html(for: .search(criteria: criteria, page: page))
-        return try parser.parseSearch(html)
+        return try parser.parseSearch(html).filter { !$0.isBlockedByContentPolicy }
     }
 
     func cachedVideo(code: String) -> HanimeVideo? {
@@ -92,7 +93,11 @@ final class HanimeRepository {
             return cached
         }
         let html = try await httpClient.html(for: .video(code: code))
-        let video = try parser.parseVideo(html, videoCode: code)
+        let parsed = try parser.parseVideo(html, videoCode: code)
+        guard !parsed.isBlockedByContentPolicy else {
+            throw VideoProviderError.blockedByContentPolicy
+        }
+        let video = parsed.filteringRelatedByContentPolicy()
         storeCachedVideo(video, code: code)
         return video
     }
@@ -123,7 +128,7 @@ final class HanimeRepository {
             for: .accountList(userID: userID, kind: kind, page: page),
             cachePolicy: .reloadIgnoringLocalCacheData
         )
-        return try parser.parseAccountVideoList(html)
+        return try parser.parseAccountVideoList(html).filteredByContentPolicy()
     }
 
     func playlists(userID: String, page: Int = 1) async throws -> HanimePlaylistsPage {
@@ -139,7 +144,7 @@ final class HanimeRepository {
             for: .playlistItems(listCode: listCode, page: page),
             cachePolicy: .reloadIgnoringLocalCacheData
         )
-        return try parser.parsePlaylistItems(html)
+        return try parser.parsePlaylistItems(html).filteredByContentPolicy()
     }
 
     func subscriptions(page: Int = 1) async throws -> HanimeSubscriptionsPage {

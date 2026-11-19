@@ -32,6 +32,15 @@
 		<string>sidestore</string>
 		<string>feather</string>
 	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Hana uses Face ID to unlock the app when Biometric Lock is turned on.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Hana connects to media servers on your local network, such as your own Jellyfin server.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

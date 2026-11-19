@@ -54,7 +54,19 @@ struct SearchScreen: View {
                             if !sourceResults.isEmpty {
                                 Section("From Enabled Sources") {
                                     ForEach(sourceResults) { result in
-                                        if let detailURL = result.detailURL {
+                                        if let itemRef = result.itemRef {
+                                            NavigationLink(value: HanaRoute.providerItem(itemRef)) {
+                                                HStack {
+                                                    VStack(alignment: .leading) {
+                                                        Text(result.title).lineLimit(2)
+                                                        Text([result.subtitle, result.sourceName].compactMap { $0 }.joined(separator: " · "))
+                                                            .font(.caption).foregroundStyle(.secondary)
+                                                    }
+                                                    Spacer()
+                                                    Image(systemName: "play.circle")
+                                                }.padding(8).background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 8))
+                                            }.buttonStyle(.plain)
+                                        } else if let detailURL = result.detailURL {
                                             Link(destination: detailURL) {
                                                 HStack {
                                                     VStack(alignment: .leading) {

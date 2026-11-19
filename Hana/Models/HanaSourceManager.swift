@@ -12,10 +12,37 @@ enum HanaSourceType: String, Codable, CaseIterable, Identifiable {
     case generic = "Generic Video Site"
     case apiFeed = "API / RSS Feed"
     case hantaiAtHome = "H@H / E-Hentai / ExHentai"
+    case jellyfin = "Jellyfin Server"
 
     var id: String { rawValue }
+
+    var providerKind: ProviderKind {
+        switch self {
+        case .hanime: .hanime
+        case .generic: .genericLink
+        case .apiFeed: .feedLink
+        case .hantaiAtHome: .hentaiAtHomeLink
+        case .jellyfin: .jellyfin
+        }
+    }
+
+    init(providerKind: ProviderKind) {
+        switch providerKind {
+        case .hanime: self = .hanime
+        case .genericLink: self = .generic
+        case .feedLink: self = .apiFeed
+        case .hentaiAtHomeLink: self = .hantaiAtHome
+        case .jellyfin: self = .jellyfin
+        }
+    }
+
+    /// Sources that play inside Hana rather than only producing links.
+    var isPlayable: Bool { providerKind.isPlayable }
 }
 
+/// UI editing model for one source. Persistence now goes through
+/// `ProviderRegistry` (`hana.providers.v1`); this struct maps 1:1 onto
+/// `ProviderSourceConfiguration`.
 struct HanaSource: Identifiable, Codable, Equatable {
     var id: UUID
     var name: String
@@ -27,9 +54,12 @@ struct HanaSource: Identifiable, Codable, Equatable {
     var lastTestAt: Date?
     var isConnected: Bool?
     var profileID: UUID?
+    var authMethod: ProviderAuthMethod = .none
+    var username: String?
 
     init(id: UUID, name: String, baseURL: String, type: HanaSourceType, enabled: Bool,
-         searchEndpoint: String, browseEndpoint: String, lastTestAt: Date?, isConnected: Bool?, profileID: UUID? = nil) {
+         searchEndpoint: String, browseEndpoint: String, lastTestAt: Date?, isConnected: Bool?, profileID: UUID? = nil,
+         authMethod: ProviderAuthMethod = .none, username: String? = nil) {
         self.id = id
         self.name = name
         self.baseURL = baseURL
@@ -40,6 +70,50 @@ struct HanaSource: Identifiable, Codable, Equatable {
         self.lastTestAt = lastTestAt
         self.isConnected = isConnected
         self.profileID = profileID
+        self.authMethod = authMethod
+        self.username = username
+    }
+
+    init(configuration: ProviderSourceConfiguration) {
+        self.init(
+            id: configuration.id,
+            name: configuration.name,
+            baseURL: configuration.baseURL,
+            type: HanaSourceType(providerKind: configuration.kind),
+            enabled: configuration.enabled,
+            searchEndpoint: configuration.searchEndpoint,
+            browseEndpoint: configuration.browseEndpoint,
+            lastTestAt: configuration.lastTestAt,
+            isConnected: configuration.isConnected,
+            profileID: configuration.profileID,
+            authMethod: configuration.authMethod,
+            username: configuration.username
+        )
+    }
+
+    func configuration(updating existing: ProviderSourceConfiguration?) -> ProviderSourceConfiguration {
+        var configuration = existing ?? ProviderSourceConfiguration(name: name, kind: type.providerKind, baseURL: baseURL)
+        configuration.id = id
+        configuration.name = name
+        configuration.kind = type.providerKind
+        configuration.baseURL = baseURL
+        configuration.enabled = enabled
+        configuration.searchEndpoint = searchEndpoint
+        configuration.browseEndpoint = browseEndpoint
+        configuration.lastTestAt = lastTestAt
+        configuration.isConnected = isConnected
+        configuration.profileID = profileID
+        configuration.authMethod = type == .jellyfin ? authMethod : .none
+        configuration.username = type == .jellyfin ? username?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty : nil
+        if existing?.baseURL != baseURL || existing?.username != configuration.username || existing?.kind != configuration.kind {
+            configuration.remoteUserID = nil
+        }
+        return configuration
+    }
+
+    static func newDraft() -> HanaSource {
+        HanaSource(id: UUID(), name: "", baseURL: "", type: .hanime, enabled: true,
+                   searchEndpoint: "/search", browseEndpoint: "/", lastTestAt: nil, isConnected: nil)
     }
 }
 
@@ -50,67 +124,83 @@ struct HanaSourceSearchResult: Identifiable, Hashable {
     let sourceID: UUID
     let detailURL: URL?
     let profileName: String?
+    /// Set for results from playable providers (e.g. Jellyfin); navigates to
+    /// `HanaRoute.providerItem` instead of opening a link.
+    let itemRef: MediaItemRef?
+    let coverURL: URL?
+    let subtitle: String?
 
-    init(title: String, sourceName: String, sourceID: UUID, detailURL: URL?, profileName: String? = nil) {
+    init(title: String, sourceName: String, sourceID: UUID, detailURL: URL?, profileName: String? = nil,
+         itemRef: MediaItemRef? = nil, coverURL: URL? = nil, subtitle: String? = nil) {
         self.title = title
         self.sourceName = sourceName
         self.sourceID = sourceID
         self.detailURL = detailURL
         self.profileName = profileName
+        self.itemRef = itemRef
+        self.coverURL = coverURL
+        self.subtitle = subtitle
     }
 }
 
+/// Facade kept for the existing Settings/Search UI. Storage and provider
+/// construction now live in `ProviderRegistry`; link-only legacy source types
+/// still use `HanaSourceSearchAdapter`.
 @Observable
 final class HanaSourceManager {
-    static let storageKey = "hana.sources.v1"
-    private(set) var sources: [HanaSource]
+    static let storageKey = ProviderRegistry.storageKey
+    static let legacyStorageKey = ProviderRegistry.legacyStorageKey
 
-    init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
-        if let data = defaults.data(forKey: Self.storageKey),
-           let saved = try? JSONDecoder().decode([HanaSource].self, from: data) {
-            sources = saved
-        } else {
-            sources = [HanaSource(
-                id: UUID(), name: "Hanime1", baseURL: HanaSiteBaseURL.defaultValue,
-                type: .hanime, enabled: true, searchEndpoint: "/search", browseEndpoint: "/",
-                lastTestAt: nil, isConnected: nil
-            )]
-            save(defaults: defaults)
-        }
+    @ObservationIgnored let registry: ProviderRegistry
+
+    var sources: [HanaSource] {
+        registry.configurations.map(HanaSource.init(configuration:))
     }
 
-    private let defaults: UserDefaults
-
-    func save() { save(defaults: defaults) }
-    private func save(defaults: UserDefaults) {
-        if let data = try? JSONEncoder().encode(sources) {
-            defaults.set(data, forKey: Self.storageKey)
-        }
+    init(registry: ProviderRegistry = HanaProviderEnvironment.registry) {
+        self.registry = registry
     }
 
     func add(_ source: HanaSource) {
-        sources.append(source)
-        save()
+        registry.add(source.configuration(updating: nil))
     }
 
     func update(_ source: HanaSource) {
-        guard let index = sources.firstIndex(where: { $0.id == source.id }) else { return }
-        sources[index] = source
-        save()
+        registry.update(source.configuration(updating: registry.configuration(id: source.id)))
     }
 
     func delete(at offsets: IndexSet) {
-        sources.remove(atOffsets: offsets)
-        save()
+        // Never delete the built-in Hanime source; its ID keys watch history.
+        let deletable = IndexSet(offsets.filter { registry.configurations[$0].providerID != .builtInHanime })
+        registry.remove(atOffsets: deletable)
     }
 
     func move(from source: IndexSet, to destination: Int) {
-        sources.move(fromOffsets: source, toOffset: destination)
-        save()
+        registry.move(fromOffsets: source, toOffset: destination)
     }
 
+    // MARK: Secrets (Keychain only)
+
+    func setSecret(_ value: String?, _ kind: ProviderSourceConfiguration.SecretKind, for sourceID: UUID) {
+        try? registry.secrets.setString(value, for: ProviderSourceConfiguration.secretAccount(sourceID, kind))
+        if kind != .accessToken {
+            // Credentials changed: force a fresh sign-in.
+            try? registry.secrets.remove(ProviderSourceConfiguration.secretAccount(sourceID, .accessToken))
+        }
+    }
+
+    func hasSecret(_ kind: ProviderSourceConfiguration.SecretKind, for sourceID: UUID) -> Bool {
+        ((try? registry.secrets.string(for: ProviderSourceConfiguration.secretAccount(sourceID, kind))) ?? nil)?.isEmpty == false
+    }
+
+    // MARK: Connection test
+
     func testConnection(_ source: HanaSource) async -> (Bool, String) {
+        if source.type == .jellyfin {
+            if registry.configuration(id: source.id) == nil { add(source) } else { update(source) }
+            let result = await registry.testConnection(id: source.id)
+            return (result.success, result.message)
+        }
         guard let base = URL(string: source.baseURL),
               let scheme = base.scheme, ["http", "https"].contains(scheme),
               let host = base.host, !host.isEmpty else {
@@ -123,38 +213,57 @@ final class HanaSourceManager {
             let (_, response) = try await URLSession.shared.data(for: request)
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             let success = (200..<400).contains(status)
-            if var updated = sources.first(where: { $0.id == source.id }) {
-                updated.lastTestAt = .now
-                updated.isConnected = success
-                update(updated)
-            }
+            registry.recordConnectionTest(id: source.id, success: success)
             return (success, success ? "Connected (HTTP \(status))" : "Connection failed (HTTP \(status))")
         } catch {
-            if var updated = sources.first(where: { $0.id == source.id }) {
-                updated.lastTestAt = .now
-                updated.isConnected = false
-                update(updated)
-            }
+            registry.recordConnectionTest(id: source.id, success: false)
             return (false, "Connection failed: \(error.localizedDescription)")
         }
     }
 
+    // MARK: Search
+
+    /// Searches enabled sources other than the built-in site (which the main
+    /// search already covers). Playable providers return navigable results;
+    /// legacy link-only types keep their old behaviour. Everything passes the
+    /// content policy.
     func globalSearch(query: String) async -> [HanaSourceSearchResult] {
-        let enabled = sources.filter(\.enabled)
-        var results: [HanaSourceSearchResult] = []
+        guard !ContentSafetyPolicy.isBlocked(query) else { return [] }
+        let configurations = registry.configurations.filter(\.enabled)
+        let linkSources = configurations
+            .filter { !$0.kind.isPlayable }
+            .map(HanaSource.init(configuration:))
+
+        async let providerResults = registry.unifiedSearch(SearchQuery(text: query), excluding: [.hanime])
+        var linkResults: [HanaSourceSearchResult] = []
         await withTaskGroup(of: [HanaSourceSearchResult].self) { group in
-            for source in enabled {
+            for source in linkSources {
                 group.addTask {
                     await HanaSourceSearchAdapter.search(query: query, source: source)
                 }
             }
-            for await sourceResults in group { results.append(contentsOf: sourceResults) }
+            for await sourceResults in group { linkResults.append(contentsOf: sourceResults) }
         }
+
+        let playable = await providerResults.results.map { result in
+            HanaSourceSearchResult(
+                title: result.item.title,
+                sourceName: result.sourceName,
+                sourceID: result.item.ref.providerID.sourceID,
+                detailURL: nil,
+                itemRef: result.item.ref,
+                coverURL: result.item.coverURL,
+                subtitle: result.item.subtitle
+            )
+        }
+
         var seen = Set<String>()
-        return results.filter { result in
+        let links = linkResults.filter { result in
+            guard !ContentSafetyPolicy.isBlocked(result.title) else { return false }
             let key = result.title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
             return seen.insert(key).inserted
         }
+        return playable + links
     }
 
     static func profileName(for profileID: UUID?) -> String? {
@@ -239,30 +348,20 @@ struct HanaSourceSearchAdapter {
     }
 }
 
+/// Thin compatibility wrapper used across the app. Backed by
+/// `KeychainStore.hana` (service `sh.celia.hana.secrets`,
+/// AfterFirstUnlockThisDeviceOnly, data-protection keychain). Items written by
+/// earlier builds without a service are migrated on first read.
 enum HanaKeychain {
     static func save(_ value: String, account: String) {
-        let data = Data(value.utf8)
-        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
-                                    kSecAttrAccount as String: account,
-                                    kSecValueData as String: data]
-        SecItemDelete(query as CFDictionary)
-        SecItemAdd(query as CFDictionary, nil)
+        saveData(Data(value.utf8), account: account)
     }
 
     static func read(account: String) -> String? {
-        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
-                                    kSecAttrAccount as String: account,
-                                    kSecReturnData as String: true,
-                                    kSecMatchLimit as String: kSecMatchLimitOne]
-        var item: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
-              let data = item as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
+        readData(account: account).flatMap { String(data: $0, encoding: .utf8) }
     }
 
     static func delete(account: String) {
-        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
-                                    kSecAttrAccount as String: account]
-        SecItemDelete(query as CFDictionary)
+        try? KeychainStore.hana.remove(account)
     }
 }

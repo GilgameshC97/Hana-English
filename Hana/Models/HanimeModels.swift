@@ -12,6 +12,8 @@ enum HanaRoute: Hashable {
     case hKeyframes
     case downloads
     case settings
+    /// An item from a non-Hanime `VideoProvider` (e.g. Jellyfin).
+    case providerItem(MediaItemRef)
 }
 
 struct HanimeSearchOption: Identifiable, Hashable, Sendable {
@@ -128,7 +130,8 @@ struct HanimeSearchCriteria: Hashable, Codable, Sendable {
             releaseYear: normalizedReleaseYear(date: date, year: releaseYear),
             releaseMonth: normalizedReleaseMonth(date: date, year: releaseYear, month: releaseMonth),
             duration: normalizedOptional(duration),
-            tags: normalizedList(tags),
+            // Minor-coded tags are never sent to the site (ContentSafetyPolicy).
+            tags: ContentSafetyPolicy.allowedTags(normalizedList(tags)),
             brands: normalizedList(brands)
         )
     }

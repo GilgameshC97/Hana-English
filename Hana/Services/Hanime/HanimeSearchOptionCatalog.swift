@@ -62,7 +62,8 @@ enum HanimeSearchOptionCatalog {
             let resource = try JSONDecoder().decode([String: [SearchOptionResource]].self, from: data)
             return tagSectionOrder.compactMap { key, title in
                 guard let options = resource[key] else { return nil }
-                return HanimeSearchOptionSection(title: title, options: options.compactMap(\.option))
+                let allowed = options.filter { !$0.isBlockedByContentPolicy }.compactMap(\.option)
+                return allowed.isEmpty ? nil : HanimeSearchOptionSection(title: title, options: allowed)
             }
         } catch {
             return []
@@ -73,14 +74,14 @@ enum HanimeSearchOptionCatalog {
         guard let data = data(named: "tags") else { return [] }
         do {
             let resource = try JSONDecoder().decode([String: [SearchOptionResource]].self, from: data)
-            return resource.values.flatMap { $0 }
+            return resource.values.flatMap { $0 }.filter { !$0.isBlockedByContentPolicy }
         } catch {
             return []
         }
     }
 
     private static func loadOptions(named name: String) -> [HanimeSearchOption] {
-        loadResources(named: name).compactMap(\.option)
+        loadResources(named: name).filter { !$0.isBlockedByContentPolicy }.compactMap(\.option)
     }
 
     static func genreSearchKey(matching label: String?) -> String? {
@@ -207,6 +208,19 @@ private struct SearchOptionResource: Decodable {
             ?? searchKey
         guard let title, !title.isEmpty else { return nil }
         return HanimeSearchOption(title: title, value: searchKey ?? name ?? title)
+    }
+
+    /// True when any of the resource's names is minor-coded. Such options are
+    /// dropped at load time, so they never appear in pickers or tag lookups,
+    /// even if a future `tags.json` update reintroduces them.
+    var isBlockedByContentPolicy: Bool {
+        ContentSafetyPolicy.isBlocked(any: [
+            lang?.simplifiedChinese,
+            lang?.traditionalChinese,
+            lang?.english,
+            name,
+            searchKey
+        ].compactMap { $0 })
     }
 
     func matches(_ value: String) -> Bool {

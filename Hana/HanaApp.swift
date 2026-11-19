@@ -62,6 +62,10 @@ struct HanaApp: App {
     @State private var servicesIdentity = UUID()
 
     init() {
+        // One-time move of any secrets older builds left in UserDefaults
+        // (H@H credentials, lock PIN) into the Keychain. Runs before any
+        // manager reads them.
+        HanaSecretsMigration.run(defaults: .standard, store: KeychainStore.hana)
         let profiles = HanaSiteProfileManager()
         _siteProfiles = State(initialValue: profiles)
         if let active = profiles.activeProfile,

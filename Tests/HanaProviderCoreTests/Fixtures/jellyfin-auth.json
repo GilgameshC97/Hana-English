@@ -1,0 +1,6 @@
+{
+  "User": { "Name": "alice", "Id": "u-1234", "Policy": { "IsAdministrator": false, "IsDisabled": false } },
+  "SessionInfo": { "Id": "sess" },
+  "AccessToken": "token-abc",
+  "ServerId": "srv-1"
+}
