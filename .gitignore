@@ -69,3 +69,7 @@ Temporary Items
 
 # Build scripts
 build_unsigned_ipa.sh
+
+# SwiftPM
+.build/
+.swiftpm/

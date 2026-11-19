@@ -285,6 +285,8 @@ struct ContentView: View {
             DownloadsScreen()
         case .settings:
             SettingsScreen()
+        case .providerItem(let ref):
+            ProviderItemDetailScreen(ref: ref)
         }
     }
 

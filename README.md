@@ -47,7 +47,15 @@ Unsigned iOS builds are published through GitHub Releases. Install only on devic
 
 The Profile tab manages independent site profiles. The built-in hanime1.me profile retains the existing Cookie Sync and Account Login flow. Additional profiles can use Cookie Sync, account credentials, or API tokens. Secret values are stored in the Keychain, not in UserDefaults or logs.
 
+## Media Providers
+
+Besides the built-in hanime1.me source, Hana can play from your own self-hosted **Jellyfin** server (Settings → Sources → Add Source → "Jellyfin Server"), using either an API key or a user name and password. Credentials are stored in the Keychain. Search results from Jellyfin appear under "From Enabled Sources" and open in a native player with resume, chapters, and watch-progress sync. Other source types are still link-only.
+
+A built-in content policy that can't be turned off removes any content, tag, or search term that depicts or targets minors, across every source. See [docs/VideoProviderRefactor.md](docs/VideoProviderRefactor.md).
+
 ## Development
+
+- Provider-layer unit tests: `swift build && swift test` (Foundation-only code in `Hana/Providers/Core`; also runs on Linux).
 
 - The existing Hanime HTML parser and search-option catalog remain the built-in hanime1.me implementation.
 - Do not commit credentials, cookies, API keys, H@H host details, or login tokens.

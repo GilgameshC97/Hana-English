@@ -1,0 +1,5 @@
+[
+  { "Name": "admin", "Id": "u-admin", "Policy": { "IsAdministrator": true, "IsDisabled": false } },
+  { "Name": "Alice", "Id": "u-1234", "Policy": { "IsAdministrator": false, "IsDisabled": false } },
+  { "Name": "old", "Id": "u-old", "Policy": { "IsDisabled": true } }
+]

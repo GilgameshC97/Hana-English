@@ -16,7 +16,11 @@ struct SourcesSettingsScreen: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(source.name).font(.headline)
-                            Text("\(source.type.rawValue) ? \(source.baseURL)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            Text("\(source.type.rawValue) · \(source.baseURL)").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            if !source.type.isPlayable {
+                                Text("Link-only: results open in the browser")
+                                    .font(.caption2).foregroundStyle(.secondary)
+                            }
                             if let connected = source.isConnected {
                                 Label(connected ? "Connected" : "Disconnected", systemImage: connected ? "checkmark.circle.fill" : "xmark.circle.fill")
                                     .font(.caption).foregroundStyle(connected ? .green : .red)
@@ -34,8 +38,7 @@ struct SourcesSettingsScreen: View {
                 .onMove(perform: manager.move)
 
                 Button("Add Source", systemImage: "plus") {
-                    editingSource = HanaSource(id: UUID(), name: "", baseURL: "", type: .hanime, enabled: true,
-                                              searchEndpoint: "/search", browseEndpoint: "/", lastTestAt: nil, isConnected: nil)
+                    editingSource = HanaSource.newDraft()
                     showingEditor = true
                 }
             }
@@ -96,7 +99,7 @@ struct SourcesSettingsScreen: View {
         }
         .navigationTitle("Sources")
         .sheet(isPresented: $showingEditor) {
-            SourceEditorSheet(source: Binding(get: { editingSource ?? HanaSource(id: UUID(), name: "", baseURL: "", type: .hanime, enabled: true, searchEndpoint: "/search", browseEndpoint: "/", lastTestAt: nil, isConnected: nil) }, set: { editingSource = $0 }), manager: manager, testMessage: $testMessage)
+            SourceEditorSheet(source: Binding(get: { editingSource ?? HanaSource.newDraft() }, set: { editingSource = $0 }), manager: manager, testMessage: $testMessage)
         }
     }
 }
@@ -107,6 +110,7 @@ private struct SourceEditorSheet: View {
     let manager: HanaSourceManager
     @Binding var testMessage: String
     @Environment(\.dismiss) private var dismiss
+    @State private var secretDraft = ""
 
     var body: some View {
         NavigationStack {
@@ -117,17 +121,48 @@ private struct SourceEditorSheet: View {
                 Picker("Source Type", selection: $source.type) {
                     ForEach(HanaSourceType.allCases) { Text($0.rawValue).tag($0) }
                 }
+                .onChange(of: source.type) { _, type in
+                    if type == .jellyfin, source.authMethod == .none { source.authMethod = .apiKey }
+                }
                 Picker("Site Profile", selection: $source.profileID) {
                     Text("None").tag(nil as UUID?)
                     ForEach(siteProfiles.profiles) { profile in
                         Text(profile.displayName).tag(profile.id as UUID?)
                     }
                 }
-                TextField("Search Endpoint", text: $source.searchEndpoint)
-                TextField("Browse Endpoint", text: $source.browseEndpoint)
+                if source.type == .jellyfin {
+                    Section {
+                        Picker("Sign-in", selection: $source.authMethod) {
+                            Text("API Key").tag(ProviderAuthMethod.apiKey)
+                            Text("User Name & Password").tag(ProviderAuthMethod.password)
+                        }
+                        TextField("User Name", text: Binding(
+                            get: { source.username ?? "" },
+                            set: { source.username = $0 }
+                        ))
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        if source.authMethod == .apiKey {
+                            SecureField(manager.hasSecret(.apiKey, for: source.id) ? "API Key (saved)" : "API Key", text: $secretDraft)
+                        } else {
+                            SecureField(manager.hasSecret(.password, for: source.id) ? "Password (saved)" : "Password", text: $secretDraft)
+                        }
+                    } header: {
+                        Text("Jellyfin")
+                    } footer: {
+                        Text("Credentials are stored in the Keychain on this device only. With an API key, the user name picks which Jellyfin user's library and watch progress to use.")
+                    }
+                } else {
+                    TextField("Search Endpoint", text: $source.searchEndpoint)
+                    TextField("Browse Endpoint", text: $source.browseEndpoint)
+                }
                 Toggle("Enabled", isOn: $source.enabled)
                 Button("Test Connection") {
                     Task {
+                        if source.type == .jellyfin, let normalized = ProviderServerURL.normalized(source.baseURL) {
+                            source.baseURL = normalized
+                        }
+                        storeSecretDraft()
                         let result = await manager.testConnection(source)
                         testMessage = result.1
                     }
@@ -139,17 +174,28 @@ private struct SourceEditorSheet: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        guard let normalized = HanaSiteBaseURL.normalized(source.baseURL), URL(string: normalized)?.host != nil,
+                        let normalizedURL = source.type == .jellyfin
+                            ? ProviderServerURL.normalized(source.baseURL)
+                            : HanaSiteBaseURL.normalized(source.baseURL)
+                        guard let normalized = normalizedURL, URL(string: normalized)?.host != nil,
                               !source.name.trimmingCharacters(in: .whitespaces).isEmpty else {
                             testMessage = "Enter a name and valid URL."; return
                         }
                         source.baseURL = normalized
+                        if source.type == .jellyfin, source.authMethod == .none { source.authMethod = .apiKey }
                         if manager.sources.contains(where: { $0.id == source.id }) { manager.update(source) } else { manager.add(source) }
+                        storeSecretDraft()
                         dismiss()
                     }
                 }
             }
         }
+    }
+
+    private func storeSecretDraft() {
+        guard source.type == .jellyfin, !secretDraft.isEmpty else { return }
+        manager.setSecret(secretDraft, source.authMethod == .password ? .password : .apiKey, for: source.id)
+        secretDraft = ""
     }
 }
 

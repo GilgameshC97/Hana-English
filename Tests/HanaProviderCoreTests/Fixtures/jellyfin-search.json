@@ -1,0 +1,35 @@
+{
+  "Items": [
+    {
+      "Name": "Planet Documentary",
+      "Id": "a1b2c3d4e5f60718293a4b5c6d7e8f90",
+      "Type": "Movie",
+      "ProductionYear": 2019,
+      "RunTimeTicks": 36000000000,
+      "Genres": ["Documentary", "Nature"],
+      "Tags": ["4K"],
+      "ImageTags": { "Primary": "img001" },
+      "UserData": { "PlaybackPositionTicks": 6000000000, "Played": false, "IsFavorite": true, "PlayedPercentage": 16.6 }
+    },
+    {
+      "Name": "Pilot",
+      "Id": "0f9e8d7c6b5a49382716051423324150",
+      "Type": "Episode",
+      "SeriesName": "Space Show",
+      "SeriesId": "11112222333344445555666677778888",
+      "SeriesPrimaryImageTag": "series001",
+      "IndexNumber": 1,
+      "ParentIndexNumber": 1,
+      "RunTimeTicks": 13200000000,
+      "UserData": { "PlaybackPositionTicks": 0, "Played": true }
+    },
+    {
+      "Name": "Blocked Example",
+      "Id": "ffffeeeeddddccccbbbbaaaa99998888",
+      "Type": "Video",
+      "Tags": ["Shota"]
+    }
+  ],
+  "TotalRecordCount": 42,
+  "StartIndex": 0
+}
